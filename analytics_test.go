@@ -90,7 +90,7 @@ func TestGetExtensionAnalytics(t *testing.T) {
 		t.Error("expected error but got nil")
 	}
 
-	if err.Error() != "Failed to execute API request: Oops, that's bad :(" {
+	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
 		t.Error("expected error does match return error")
 	}
 }
@@ -175,7 +175,7 @@ func TestGetGameAnalytics(t *testing.T) {
 		t.Error("expected error but got nil")
 	}
 
-	if err.Error() != "Failed to execute API request: Oops, that's bad :(" {
+	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
 		t.Error("expected error does match return error")
 	}
 }

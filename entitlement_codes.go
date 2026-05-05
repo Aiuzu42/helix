@@ -4,14 +4,14 @@ type EntitlementCodeStatus string
 
 const (
 	SUCCESSFULLY_REDEEMED EntitlementCodeStatus = "SUCCESSFULLY_REDEEMED"
-	ALREADY_CLAIMED                             = "ALREADY_CLAIMED"
-	EXPIRED                                     = "EXPIRED"
-	USER_NOT_ELIGIBLE                           = "USER_NOT_ELIGIBLE"
-	NOT_FOUND                                   = "NOT_FOUND"
-	INACTIVE                                    = "INACTIVE"
-	UNUSED                                      = "UNUSED"
-	INCORRECT_FORMAT                            = "INCORRECT_FORMAT"
-	INTERNAL_ERROR                              = "INTERNAL_ERROR"
+	ALREADY_CLAIMED       EntitlementCodeStatus = "ALREADY_CLAIMED"
+	EXPIRED               EntitlementCodeStatus = "EXPIRED"
+	USER_NOT_ELIGIBLE     EntitlementCodeStatus = "USER_NOT_ELIGIBLE"
+	NOT_FOUND             EntitlementCodeStatus = "NOT_FOUND"
+	INACTIVE              EntitlementCodeStatus = "INACTIVE"
+	UNUSED                EntitlementCodeStatus = "UNUSED"
+	INCORRECT_FORMAT      EntitlementCodeStatus = "INCORRECT_FORMAT"
+	INTERNAL_ERROR        EntitlementCodeStatus = "INTERNAL_ERROR"
 )
 
 type CodesParams struct {

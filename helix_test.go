@@ -22,7 +22,7 @@ type mockHTTPClient struct {
 func (mtc *mockHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	rr := httptest.NewRecorder()
 	if req.Body != nil {
-		defer req.Body.Close()
+		defer req.Body.Close() //nolint:errcheck
 		if out, err := io.ReadAll(req.Body); err != nil {
 			return nil, err
 		} else if len(out) != int(req.ContentLength) {
@@ -52,7 +52,7 @@ func newMockHandler(statusCode int, json string, headers map[string]string) http
 		}
 
 		w.WriteHeader(statusCode)
-		w.Write([]byte(json))
+		w.Write([]byte(json)) //nolint:errcheck
 	}
 }
 
@@ -418,13 +418,13 @@ func TestAutomaticUserTokenRefresh(t *testing.T) {
 	}
 	client := newMockClient(options, func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.URL.Path, "/oauth2/token") {
-			w.Write([]byte(`{"access_token":"new-access-token","expires_in":14154,"refresh_token":"new-refresh-token","scope":["analytics:read:games","bits:read","clips:edit","user:edit","user:read:email"]}`))
+			w.Write([]byte(`{"access_token":"new-access-token","expires_in":14154,"refresh_token":"new-refresh-token","scope":["analytics:read:games","bits:read","clips:edit","user:edit","user:read:email"]}`)) //nolint:errcheck
 		} else if strings.Contains(r.URL.Path, "/channels/followers") {
 			if strings.Contains(r.Header.Get("Authorization"), "old-user-token") {
 				w.WriteHeader(http.StatusUnauthorized)
-				w.Write([]byte(`{"error":"Unauthorized","status":401,"message":"Invalid OAuth token"}`))
+				w.Write([]byte(`{"error":"Unauthorized","status":401,"message":"Invalid OAuth token"}`)) //nolint:errcheck
 			} else {
-				w.Write([]byte(`{"total":8,"data":[],"pagination":{}}`))
+				w.Write([]byte(`{"total":8,"data":[],"pagination":{}}`)) //nolint:errcheck
 			}
 		} else {
 			log.Printf("Unknown URL sent to test server: %s", r.URL.Path)
@@ -456,13 +456,13 @@ func TestAutomaticAppTokenRefresh(t *testing.T) {
 	}
 	client := newMockClient(options, func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.URL.Path, "/oauth2/token") {
-			w.Write([]byte(`{"access_token":"new-app-token","expires_in":5035145,"token_type":"bearer"}`))
+			w.Write([]byte(`{"access_token":"new-app-token","expires_in":5035145,"token_type":"bearer"}`)) //nolint:errcheck
 		} else if strings.Contains(r.URL.Path, "/streams") {
 			if strings.Contains(r.Header.Get("Authorization"), "old-app-token") {
 				w.WriteHeader(http.StatusUnauthorized)
-				w.Write([]byte(`{"error":"Unauthorized","status":401,"message":"Invalid OAuth token"}`))
+				w.Write([]byte(`{"error":"Unauthorized","status":401,"message":"Invalid OAuth token"}`)) //nolint:errcheck
 			} else {
-				w.Write([]byte(`{"data":[],"pagination":{}}`))
+				w.Write([]byte(`{"data":[],"pagination":{}}`)) //nolint:errcheck
 			}
 		} else {
 			log.Printf("Unknown URL sent to test server: %s", r.URL.Path)
@@ -489,13 +489,13 @@ func TestOnAppAccessTokenRefreshed(t *testing.T) {
 	}
 	client := newMockClient(options, func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.URL.Path, "/oauth2/token") {
-			w.Write([]byte(`{"access_token":"new-app-token","expires_in":5035145,"token_type":"bearer"}`))
+			w.Write([]byte(`{"access_token":"new-app-token","expires_in":5035145,"token_type":"bearer"}`)) //nolint:errcheck
 		} else if strings.Contains(r.URL.Path, "/streams") {
 			if strings.Contains(r.Header.Get("Authorization"), "old-app-token") {
 				w.WriteHeader(http.StatusUnauthorized)
-				w.Write([]byte(`{"error":"Unauthorized","status":401,"message":"Invalid OAuth token"}`))
+				w.Write([]byte(`{"error":"Unauthorized","status":401,"message":"Invalid OAuth token"}`)) //nolint:errcheck
 			} else {
-				w.Write([]byte(`{"data":[],"pagination":{}}`))
+				w.Write([]byte(`{"data":[],"pagination":{}}`)) //nolint:errcheck
 			}
 		} else {
 			log.Printf("Unknown URL sent to test server: %s", r.URL.Path)
@@ -533,10 +533,10 @@ func TestNoTokenRefreshOnMissingScope(t *testing.T) {
 	client := newMockClient(options, func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.URL.Path, "/oauth2/token") {
 			refreshCalled = true
-			w.Write([]byte(`{"access_token":"new-access-token","expires_in":14154,"refresh_token":"new-refresh-token","scope":[]}`))
+			w.Write([]byte(`{"access_token":"new-access-token","expires_in":14154,"refresh_token":"new-refresh-token","scope":[]}`)) //nolint:errcheck
 		} else if strings.Contains(r.URL.Path, "/channels/followers") {
 			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte(`{"error":"Unauthorized","status":401,"message":"Missing scope: moderator:read:followers"}`))
+			w.Write([]byte(`{"error":"Unauthorized","status":401,"message":"Missing scope: moderator:read:followers"}`)) //nolint:errcheck
 		} else {
 			log.Printf("Unknown URL sent to test server: %s", r.URL.Path)
 		}
@@ -577,11 +577,11 @@ func TestNoInfiniteLoopOnPersistent401(t *testing.T) {
 	client := newMockClient(options, func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.URL.Path, "/oauth2/token") {
 			refreshCount++
-			w.Write([]byte(`{"access_token":"new-access-token","expires_in":14154,"refresh_token":"new-refresh-token","scope":[]}`))
+			w.Write([]byte(`{"access_token":"new-access-token","expires_in":14154,"refresh_token":"new-refresh-token","scope":[]}`)) //nolint:errcheck
 		} else if strings.Contains(r.URL.Path, "/channels/followers") {
 			// Always return 401, even after refresh
 			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte(`{"error":"Unauthorized","status":401,"message":"Invalid OAuth token"}`))
+			w.Write([]byte(`{"error":"Unauthorized","status":401,"message":"Invalid OAuth token"}`)) //nolint:errcheck
 		} else {
 			log.Printf("Unknown URL sent to test server: %s", r.URL.Path)
 		}
@@ -612,13 +612,13 @@ func TestAutomaticUserTokenRefreshWithRequestBody(t *testing.T) {
 	}
 	client := newMockClient(options, func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.URL.Path, "/oauth2/token") {
-			w.Write([]byte(`{"access_token":"new-access-token","expires_in":14154,"refresh_token":"new-refresh-token","scope":["analytics:read:games","bits:read","clips:edit","user:edit","user:read:email"]}`))
+			w.Write([]byte(`{"access_token":"new-access-token","expires_in":14154,"refresh_token":"new-refresh-token","scope":["analytics:read:games","bits:read","clips:edit","user:edit","user:read:email"]}`)) //nolint:errcheck
 		} else if strings.Contains(r.URL.Path, "/eventsub/subscriptions") {
 			if strings.Contains(r.Header.Get("Authorization"), "old-user-token") {
 				w.WriteHeader(http.StatusUnauthorized)
-				w.Write([]byte(`{"error":"Unauthorized","status":401,"message":"Invalid OAuth token"}`))
+				w.Write([]byte(`{"error":"Unauthorized","status":401,"message":"Invalid OAuth token"}`)) //nolint:errcheck
 			} else {
-				w.Write([]byte(`{"total":8,"data":[],"pagination":{}}`))
+				w.Write([]byte(`{"total":8,"data":[],"pagination":{}}`)) //nolint:errcheck
 			}
 		} else {
 			log.Printf("Unknown URL sent to test server: %s", r.URL.Path)
@@ -806,7 +806,7 @@ func TestFailedHTTPClientDoRequest(t *testing.T) {
 		t.Error("expected error but got nil")
 	}
 
-	if err.Error() != "Failed to execute API request: Oops, that's bad :(" {
+	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
 		t.Errorf("expected error does match return error: %v", err)
 	}
 }
@@ -824,7 +824,7 @@ func TestDecodingBadJSON(t *testing.T) {
 		t.Error("expected error but got nil")
 	}
 
-	if err.Error() != "Failed to decode API response: invalid character 'd' looking for beginning of value" {
+	if err.Error() != "failed to decode API response: invalid character 'd' looking for beginning of value" {
 		t.Error("expected error does match return error")
 	}
 }
@@ -1083,13 +1083,13 @@ func TestOnUserAccessTokenRefreshed(t *testing.T) {
 	}
 	client := newMockClient(options, func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.URL.Path, "/oauth2/token") {
-			w.Write([]byte(`{"access_token":"new-access-token","expires_in":14154,"refresh_token":"new-refresh-token","scope":["analytics:read:games","bits:read","clips:edit","user:edit","user:read:email"]}`))
+			w.Write([]byte(`{"access_token":"new-access-token","expires_in":14154,"refresh_token":"new-refresh-token","scope":["analytics:read:games","bits:read","clips:edit","user:edit","user:read:email"]}`)) //nolint:errcheck
 		} else if strings.Contains(r.URL.Path, "/channels/followers") {
 			if strings.Contains(r.Header.Get("Authorization"), "old-user-token") {
 				w.WriteHeader(http.StatusUnauthorized)
-				w.Write([]byte(`{"error":"Unauthorized","status":401,"message":"Invalid OAuth token"}`))
+				w.Write([]byte(`{"error":"Unauthorized","status":401,"message":"Invalid OAuth token"}`)) //nolint:errcheck
 			} else {
-				w.Write([]byte(`{"total":8,"data":[],"pagination":{}}`))
+				w.Write([]byte(`{"total":8,"data":[],"pagination":{}}`)) //nolint:errcheck
 			}
 		} else {
 			log.Printf("Unknown URL sent to test server: %s", r.URL.Path)
@@ -1128,16 +1128,16 @@ func TestHydrateRequestCommon(t *testing.T) {
 	sampleError := "foo"
 	sampleErrorStatus := 1
 	sampleErrorMessage := "something done broke"
-	sourceResponse.ResponseCommon.StatusCode = sampleStatusCode
-	sourceResponse.ResponseCommon.Header = sampleHeaders
-	sourceResponse.ResponseCommon.Error = sampleError
-	sourceResponse.ResponseCommon.ErrorStatus = sampleErrorStatus
-	sourceResponse.ResponseCommon.ErrorMessage = sampleErrorMessage
+	sourceResponse.StatusCode = sampleStatusCode
+	sourceResponse.Header = sampleHeaders
+	sourceResponse.Error = sampleError
+	sourceResponse.ErrorStatus = sampleErrorStatus
+	sourceResponse.ErrorMessage = sampleErrorMessage
 
 	var targetResponse Response
 	sourceResponse.HydrateResponseCommon(&targetResponse.ResponseCommon)
 	if targetResponse.StatusCode != sampleStatusCode {
-		t.Errorf("expected StatusCode to be \"%d\", got \"%d\"", sampleStatusCode, targetResponse.ResponseCommon.StatusCode)
+		t.Errorf("expected StatusCode to be \"%d\", got \"%d\"", sampleStatusCode, targetResponse.StatusCode)
 	}
 
 	if targetResponse.Header.Get("Content-Type") != "application/json" {
@@ -1145,15 +1145,15 @@ func TestHydrateRequestCommon(t *testing.T) {
 	}
 
 	if targetResponse.Error != sampleError {
-		t.Errorf("expected Error to be \"%s\", got \"%s\"", sampleError, targetResponse.ResponseCommon.Error)
+		t.Errorf("expected Error to be \"%s\", got \"%s\"", sampleError, targetResponse.Error)
 	}
 
 	if targetResponse.ErrorStatus != sampleErrorStatus {
-		t.Errorf("expected ErrorStatus to be \"%d\", got \"%d\"", sampleErrorStatus, targetResponse.ResponseCommon.ErrorStatus)
+		t.Errorf("expected ErrorStatus to be \"%d\", got \"%d\"", sampleErrorStatus, targetResponse.ErrorStatus)
 	}
 
 	if targetResponse.ErrorMessage != sampleErrorMessage {
-		t.Errorf("expected ErrorMessage to be \"%s\", got \"%s\"", sampleErrorMessage, targetResponse.ResponseCommon.ErrorMessage)
+		t.Errorf("expected ErrorMessage to be \"%s\", got \"%s\"", sampleErrorMessage, targetResponse.ErrorMessage)
 	}
 }
 

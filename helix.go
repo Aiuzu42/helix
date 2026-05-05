@@ -140,11 +140,11 @@ type Response struct {
 
 // HydrateResponseCommon copies the content of the source response's ResponseCommon to the supplied ResponseCommon argument
 func (r *Response) HydrateResponseCommon(rc *ResponseCommon) {
-	rc.StatusCode = r.ResponseCommon.StatusCode
-	rc.Header = r.ResponseCommon.Header
-	rc.Error = r.ResponseCommon.Error
-	rc.ErrorStatus = r.ResponseCommon.ErrorStatus
-	rc.ErrorMessage = r.ResponseCommon.ErrorMessage
+	rc.StatusCode = r.StatusCode
+	rc.Header = r.Header
+	rc.Error = r.Error
+	rc.ErrorStatus = r.ErrorStatus
+	rc.ErrorMessage = r.ErrorMessage
 }
 
 type Pagination struct {
@@ -159,7 +159,7 @@ func NewClient(options *Options) (*Client, error) {
 
 func NewClientWithContext(ctx context.Context, options *Options) (*Client, error) {
 	if options.ClientID == "" {
-		return nil, errors.New("A client ID was not provided but is required")
+		return nil, errors.New("a client ID was not provided but is required")
 	}
 
 	if options.HTTPClient == nil {
@@ -426,9 +426,9 @@ func (c *Client) doRequest(req *http.Request, resp *Response) error {
 		response, err := c.opts.HTTPClient.Do(req)
 		attempt++
 		if err != nil {
-			return fmt.Errorf("Failed to execute API request: %s", err.Error())
+			return fmt.Errorf("failed to execute API request: %s", err.Error())
 		}
-		defer response.Body.Close()
+		defer response.Body.Close() //nolint:errcheck
 
 		resp.Header = response.Header
 
@@ -454,7 +454,7 @@ func (c *Client) doRequest(req *http.Request, resp *Response) error {
 				// Failed request
 				err = json.Unmarshal(bodyBytes, &resp)
 				if err != nil {
-					return fmt.Errorf("Failed to decode API response: %s", err.Error())
+					return fmt.Errorf("failed to decode API response: %s", err.Error())
 				}
 
 				// A 401 may mean Twitch wants us to refresh our token:
@@ -478,7 +478,7 @@ func (c *Client) doRequest(req *http.Request, resp *Response) error {
 			}
 
 			if err != nil {
-				return fmt.Errorf("Failed to decode API response: %s", err.Error())
+				return fmt.Errorf("failed to decode API response: %s", err.Error())
 			}
 		}
 

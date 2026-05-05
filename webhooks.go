@@ -69,11 +69,11 @@ func (c *Client) PostWebhookSubscription(payload *WebhookSubscriptionPayload) (*
 
 // Regular expressions used for parsing webhook link headers
 var (
-	UserFollowsRegexp        = regexp.MustCompile("helix/users/follows\\?first=1(&from_id=(?P<from_id>\\d+))?(&to_id=(?P<to_id>\\d+))?>")
-	StreamChangedRegexp      = regexp.MustCompile("helix/streams\\?user_id=(?P<user_id>\\d+)>")
-	UserChangedRegexp        = regexp.MustCompile("helix/users\\?id=(?P<id>\\d+)>")
-	GameAnalyticsRegexp      = regexp.MustCompile("helix/analytics\\?game_id=(?P<game_id>\\w+)>")
-	ExtensionAnalyticsRegexp = regexp.MustCompile("helix/analytics\\?extension_id=(?P<extension_id>\\w+)>")
+	UserFollowsRegexp        = regexp.MustCompile(`helix/users/follows\?first=1(&from_id=(?P<from_id>\d+))?(&to_id=(?P<to_id>\d+))?>`)
+	StreamChangedRegexp      = regexp.MustCompile(`helix/streams\?user_id=(?P<user_id>\d+)>`)
+	UserChangedRegexp        = regexp.MustCompile(`helix/users\?id=(?P<id>\d+)>`)
+	GameAnalyticsRegexp      = regexp.MustCompile(`helix/analytics\?game_id=(?P<game_id>\w+)>`)
+	ExtensionAnalyticsRegexp = regexp.MustCompile(`helix/analytics\?extension_id=(?P<extension_id>\w+)>`)
 )
 
 // WebhookTopic is a topic that relates to a specific webhook event.
