@@ -38,7 +38,7 @@ type TwitchJWTClaims struct {
 	Role         RoleType           `json:"role"`
 	Unlinked     bool               `json:"is_unlinked,omitempty"`
 	Permissions  *PubSubPermissions `json:"pubsub_perms"`
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 }
 
 type ExtensionCreateClaimsParams struct {
@@ -65,7 +65,7 @@ func (c *Client) ExtensionCreateClaims(
 
 	// default expiration to 3 minutes
 	if params.Expiration == 0 {
-		params.Expiration = time.Now().Add(time.Minute*3).UnixNano() / int64(time.Millisecond)
+		params.Expiration = time.Now().Add(time.Minute * 3).Unix()
 	}
 
 	// default channelID to 'all'
@@ -78,8 +78,8 @@ func (c *Client) ExtensionCreateClaims(
 		ChannelID:   params.ChannelID,
 		Role:        ExternalRole,
 		Permissions: params.PubSub,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: params.Expiration,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Unix(params.Expiration, 0)),
 		},
 	}
 
@@ -124,7 +124,7 @@ func (c *Client) ExtensionJWTVerify(token string) (claims *TwitchJWTClaims, err 
 
 	parsedToken, err := jwt.ParseWithClaims(token, &TwitchJWTClaims{}, func(tkn *jwt.Token) (interface{}, error) {
 		if _, ok := tkn.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Unexpected signing method: %s", tkn.Header["alg"])
+			return nil, fmt.Errorf("unexpected signing method: %s", tkn.Header["alg"])
 		}
 
 		key, err := base64.StdEncoding.DecodeString(c.opts.ExtensionOpts.Secret)

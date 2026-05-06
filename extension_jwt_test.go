@@ -60,11 +60,11 @@ func TestCreateClaims(t *testing.T) {
 	if claims.ChannelID != channelID {
 		t.Errorf("claims broadcasterId doesn't match got %s expected %s", claims.ChannelID, channelID)
 	}
-	if claims.ExpiresAt < time.Now().Add(4*time.Minute).UnixNano() && claims.ExpiresAt > time.Now().Add(-2*time.Minute).UnixNano() {
+	if claims.ExpiresAt.Unix() >= time.Now().Add(4*time.Minute).Unix() || claims.ExpiresAt.Unix() <= time.Now().Add(-2*time.Minute).Unix() {
 		t.Errorf("claims expiry less than 3 minutes")
 	}
 
-	expiration := time.Now().Add(10*time.Minute).UnixNano() / int64(time.Millisecond)
+	expiration := time.Now().Add(10 * time.Minute).Unix()
 	params.Expiration = expiration
 	claims, err = c.ExtensionCreateClaims(params)
 	if err != nil {
@@ -72,7 +72,7 @@ func TestCreateClaims(t *testing.T) {
 	}
 
 	overTime := time.Now().Add(15 * time.Minute).Unix()
-	if claims.ExpiresAt < overTime {
+	if claims.ExpiresAt.Unix() >= overTime {
 		t.Errorf("claims expiry does not confine to 10 minutes expiry")
 	}
 }
@@ -137,12 +137,12 @@ func TestVerifyJWT(t *testing.T) {
 		t.Errorf("JWT token is empty")
 	}
 
-	claims, err = c.ExtensionJWTVerify("")
+	_, err = c.ExtensionJWTVerify("")
 	if err != nil && !strings.Contains(err.Error(), "JWT token string missing") {
 		t.Errorf("unexpected error verifying JWT err:%s", err)
 	}
 
-	claims, err = c.ExtensionJWTVerify("abcd")
+	_, err = c.ExtensionJWTVerify("abcd")
 	if err != nil && !strings.Contains(err.Error(), "token contains an invalid number of segments") {
 		t.Errorf("unexpected error verifying JWT err:%s", err)
 	}
@@ -174,7 +174,7 @@ func TestVerifyJWT(t *testing.T) {
 		t.Errorf("JWT token is empty")
 	}
 
-	claims, err = c.ExtensionJWTVerify(jwt)
+	_, err = c.ExtensionJWTVerify(jwt)
 	if err != nil && !strings.Contains(err.Error(), "token is expired by 10m") {
 		t.Errorf("unexpected error verifying JWT err:%s", err)
 	}

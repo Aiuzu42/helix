@@ -72,7 +72,7 @@ func TestCreateCustomReward(t *testing.T) {
 		t.Error("expected error but got nil")
 	}
 
-	if err.Error() != "Failed to execute API request: Oops, that's bad :(" {
+	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
 		t.Error("expected error does match return error")
 	}
 }
@@ -153,7 +153,7 @@ func TestGetCustomRewardsRedemptions(t *testing.T) {
 		t.Error("expected error but got nil")
 	}
 
-	if err.Error() != "Failed to execute API request: Oops, that's bad :(" {
+	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
 		t.Error("expected error does match return error")
 	}
 }
@@ -225,7 +225,7 @@ func TestUpdateCustomReward(t *testing.T) {
 		t.Error("expected error but got nil")
 	}
 
-	if err.Error() != "Failed to execute API request: Oops, that's bad :(" {
+	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
 		t.Error("expected error does match return error")
 	}
 }
@@ -295,7 +295,7 @@ func TestDeleteCustomRewards(t *testing.T) {
 		t.Error("expected error but got nil")
 	}
 
-	if err.Error() != "Failed to execute API request: Oops, that's bad :(" {
+	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
 		t.Error("expected error does match return error")
 	}
 }
@@ -364,7 +364,7 @@ func TestGetCustomRewards(t *testing.T) {
 		t.Error("expected error but got nil")
 	}
 
-	if err.Error() != "Failed to execute API request: Oops, that's bad :(" {
+	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
 		t.Error("expected error does match return error")
 	}
 }

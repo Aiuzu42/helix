@@ -146,7 +146,7 @@ func TestGetChannelChatBadges(t *testing.T) {
 		t.Error("expected error but got nil")
 	}
 
-	if err.Error() != "Failed to execute API request: Oops, that's bad :(" {
+	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
 		t.Error("expected error does match return error")
 	}
 }
@@ -218,7 +218,7 @@ func TestGetGlobalChatBadges(t *testing.T) {
 		t.Error("expected error but got nil")
 	}
 
-	if err.Error() != "Failed to execute API request: Oops, that's bad :(" {
+	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
 		t.Error("expected error does match return error")
 	}
 }
@@ -293,7 +293,7 @@ func TestGetChannelEmotes(t *testing.T) {
 		t.Error("expected error but got nil")
 	}
 
-	if err.Error() != "Failed to execute API request: Oops, that's bad :(" {
+	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
 		t.Error("expected error does match return error")
 	}
 }
@@ -365,7 +365,7 @@ func TestGetGlobalEmotes(t *testing.T) {
 		t.Error("expected error but got nil")
 	}
 
-	if err.Error() != "Failed to execute API request: Oops, that's bad :(" {
+	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
 		t.Error("expected error does match return error")
 	}
 }
@@ -469,7 +469,7 @@ func TestGetEmoteSets(t *testing.T) {
 		t.Error("expected error but got nil")
 	}
 
-	if err.Error() != "Failed to execute API request: Oops, that's bad :(" {
+	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
 		t.Error("expected error does match return error")
 	}
 }
@@ -544,7 +544,7 @@ func TestSendChatAnnouncement(t *testing.T) {
 		t.Error("expected error but got nil")
 	}
 
-	if err.Error() != "Failed to execute API request: Oops, that's bad :(" {
+	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
 		t.Error("expected error does match return error")
 	}
 }
@@ -695,7 +695,7 @@ func TestGetChatSettings(t *testing.T) {
 		t.Error("expected error but got nil")
 	}
 
-	const expectedHTTPError = "Failed to execute API request: Oops, that's bad :("
+	const expectedHTTPError = "failed to execute API request: Oops, that's bad :("
 
 	if err.Error() != expectedHTTPError {
 		t.Errorf("expected error does match return error, got '%s'", err.Error())
@@ -820,7 +820,7 @@ func TestUpdateChatSettings(t *testing.T) {
 		t.Error("expected error but got nil")
 	}
 
-	const expectedHTTPError = "Failed to execute API request: Oops, that's bad :("
+	const expectedHTTPError = "failed to execute API request: Oops, that's bad :("
 
 	if err.Error() != expectedHTTPError {
 		t.Errorf("expected error does match return error, got '%s'", err.Error())
@@ -1057,7 +1057,7 @@ func TestSendChatMessage(t *testing.T) {
 		t.Error("expected error but got nil")
 	}
 
-	const expectedHTTPError = "Failed to execute API request: Oops, that's bad :("
+	const expectedHTTPError = "failed to execute API request: Oops, that's bad :("
 
 	if err.Error() != expectedHTTPError {
 		t.Errorf("expected error does match return error, got '%s'", err.Error())

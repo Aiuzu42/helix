@@ -24,11 +24,14 @@ func TestUnmarshalJSON(t *testing.T) {
 
 	for _, testCase := range testCases {
 		tme := &timeTest{}
-		json.Unmarshal([]byte(`{"started_at": "`+testCase.testStr+`"}`), tme)
+		err := json.Unmarshal([]byte(`{"started_at": "`+testCase.testStr+`"}`), tme)
+		if err != nil {
+			t.Fatalf("failed to unmarshal: %v", err)
+		}
 
 		if !tme.T.IsZero() {
-			if tme.T.Time.String() != testCase.datetimeValue {
-				t.Errorf("expected time to be \"%s\", got \"%s\"", testCase.datetimeValue, tme.T.Time.String())
+			if tme.T.String() != testCase.datetimeValue {
+				t.Errorf("expected time to be \"%s\", got \"%s\"", testCase.datetimeValue, tme.T.String())
 			}
 		}
 

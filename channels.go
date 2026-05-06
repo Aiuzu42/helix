@@ -86,10 +86,10 @@ type ManyFollowedChannels struct {
 
 // Channel describes a followed channel
 type FollowedChannel struct {
-	BroadcasterID   string `json:"broadcaster_id"`
-	BroadcasterName string `json:"broadcaster_name"`
+	BroadcasterID    string `json:"broadcaster_id"`
+	BroadcasterName  string `json:"broadcaster_name"`
 	BroadcasterLogin string `json:"broadcaster_login"`
-	Followed        Time   `json:"followed_at"`
+	Followed         Time   `json:"followed_at"`
 }
 
 // SearchChannels searches for Twitch channels based on the given search

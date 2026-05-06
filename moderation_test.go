@@ -91,7 +91,7 @@ func TestGetBannedUsers(t *testing.T) {
 		t.Error("expected error but got nil")
 	}
 
-	if err.Error() != "Failed to execute API request: Oops, that's bad :(" {
+	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
 		t.Error("expected error does match return error")
 	}
 }
@@ -202,7 +202,7 @@ func TestBanUser(t *testing.T) {
 		t.Error("expected error but got nil")
 	}
 
-	if err.Error() != "Failed to execute API request: Oops, that's bad :(" {
+	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
 		t.Error("expected error does match return error")
 	}
 }
@@ -273,7 +273,7 @@ func TestUnbanUser(t *testing.T) {
 		t.Error("expected error but got nil")
 	}
 
-	if err.Error() != "Failed to execute API request: Oops, that's bad :(" {
+	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
 		t.Error("expected error does match return error")
 	}
 }
@@ -376,7 +376,7 @@ func TestGetBlockedTerms(t *testing.T) {
 		t.Error("expected error but got nil")
 	}
 
-	if err.Error() != "Failed to execute API request: Oops, that's bad :(" {
+	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
 		t.Error("expected error does match return error")
 	}
 }
@@ -449,7 +449,7 @@ func TestAddBlockedTerm(t *testing.T) {
 			t.Errorf("expected blocked word to be %s, got %s", testCase.params.Text, resp.Data.Terms[0].Text)
 		}
 
-		if !resp.Data.Terms[0].ExpiresAt.Time.IsZero() {
+		if !resp.Data.Terms[0].ExpiresAt.IsZero() {
 			t.Errorf("expected expiration time to be %s, got %s", "nil", resp.Data.Terms[0].ExpiresAt)
 		}
 	}
@@ -471,7 +471,7 @@ func TestAddBlockedTerm(t *testing.T) {
 		t.Error("expected error but got nil")
 	}
 
-	if err.Error() != "Failed to execute API request: Oops, that's bad :(" {
+	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
 		t.Error("expected error does match return error")
 	}
 }
@@ -542,7 +542,7 @@ func TestRemoveBlockedTerm(t *testing.T) {
 		t.Error("expected error but got nil")
 	}
 
-	if err.Error() != "Failed to execute API request: Oops, that's bad :(" {
+	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
 		t.Error("expected error does match return error")
 	}
 }
@@ -630,7 +630,7 @@ func TestDeleteChatMessage(t *testing.T) {
 		t.Error("expected error but got nil")
 	}
 
-	if err.Error() != "Failed to execute API request: Oops, that's bad :(" {
+	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
 		t.Error("expected error does match return error")
 	}
 }
@@ -705,7 +705,7 @@ func TestDeleteAllChatMessages(t *testing.T) {
 		t.Error("expected error but got nil")
 	}
 
-	if err.Error() != "Failed to execute API request: Oops, that's bad :(" {
+	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
 		t.Error("expected error does match return error")
 	}
 }
@@ -805,7 +805,7 @@ func TestGetModerators(t *testing.T) {
 		t.Error("expected error but got nil")
 	}
 
-	if err.Error() != "Failed to execute API request: Oops, that's bad :(" {
+	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
 		t.Error("expected error does match return error")
 	}
 }
@@ -875,7 +875,7 @@ func TestAddChannelModerator(t *testing.T) {
 		t.Error("expected error but got nil")
 	}
 
-	if err.Error() != "Failed to execute API request: Oops, that's bad :(" {
+	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
 		t.Error("expected error does match return error")
 	}
 }
@@ -945,7 +945,7 @@ func TestRemoveChannelModerator(t *testing.T) {
 		t.Error("expected error but got nil")
 	}
 
-	if err.Error() != "Failed to execute API request: Oops, that's bad :(" {
+	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
 		t.Error("expected error does match return error")
 	}
 }
@@ -1113,7 +1113,7 @@ func TestGetModeratedChannels(t *testing.T) {
 		t.Error("expected error but got nil")
 	}
 
-	if err.Error() != "Failed to execute API request: Oops, that's bad :(" {
+	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
 		t.Error("expected error does match return error")
 	}
 }
@@ -1290,7 +1290,7 @@ func TestSendModeratorWarnMessage(t *testing.T) {
 		t.Error("expected error but got nil")
 	}
 
-	if err.Error() != "Failed to execute API request: Oops, that's bad :(" {
+	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
 		t.Error("expected error does match return error")
 	}
 }
