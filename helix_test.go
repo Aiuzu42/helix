@@ -824,8 +824,9 @@ func TestDecodingBadJSON(t *testing.T) {
 		t.Error("expected error but got nil")
 	}
 
-	if err.Error() != "failed to decode API response: invalid character 'd' looking for beginning of value" {
-		t.Error("expected error does match return error")
+	expectedErr := `received non-JSON response (status 200): data":["some":"data"]}`
+	if err.Error() != expectedErr {
+		t.Errorf("expected error %q but got %q", expectedErr, err.Error())
 	}
 }
 

@@ -33,7 +33,7 @@ type HTTPClient interface {
 // Logger is the interface used by the helix client for debug logging.
 // The stdlib *log.Logger satisfies this interface.
 type Logger interface {
-	Printf(format string, v ...interface{})
+	Printf(format string, v ...any)
 }
 
 type Client struct {
@@ -66,7 +66,7 @@ type Options struct {
 	// Only enable in non-production environments.
 	DebugMode bool
 	// Logger is the logger used when DebugMode is true. If nil, a default logger
-	// writing to os.Stderr is used. Any type implementing Printf(string, ...interface{})
+	// writing to os.Stderr is used. Any type implementing Printf(string, ...any)
 	// is accepted (e.g. *log.Logger).
 	Logger Logger
 }
@@ -135,7 +135,7 @@ func (rc *ResponseCommon) GetRateLimitReset() int {
 
 type Response struct {
 	ResponseCommon
-	Data interface{}
+	Data any
 }
 
 // HydrateResponseCommon copies the content of the source response's ResponseCommon to the supplied ResponseCommon argument
@@ -182,41 +182,41 @@ func NewClientWithContext(ctx context.Context, options *Options) (*Client, error
 	return client, nil
 }
 
-func (c *Client) logf(format string, v ...interface{}) {
+func (c *Client) logf(format string, v ...any) {
 	if c.opts.DebugMode && c.opts.Logger != nil {
 		c.opts.Logger.Printf(format, v...)
 	}
 }
 
-func (c *Client) get(path string, respData, reqData interface{}) (*Response, error) {
+func (c *Client) get(path string, respData, reqData any) (*Response, error) {
 	return c.sendRequest(http.MethodGet, path, respData, reqData, false)
 }
 
-func (c *Client) post(path string, respData, reqData interface{}) (*Response, error) {
+func (c *Client) post(path string, respData, reqData any) (*Response, error) {
 	return c.sendRequest(http.MethodPost, path, respData, reqData, false)
 }
 
-func (c *Client) put(path string, respData, reqData interface{}) (*Response, error) {
+func (c *Client) put(path string, respData, reqData any) (*Response, error) {
 	return c.sendRequest(http.MethodPut, path, respData, reqData, false)
 }
 
-func (c *Client) delete(path string, respData, reqData interface{}) (*Response, error) {
+func (c *Client) delete(path string, respData, reqData any) (*Response, error) {
 	return c.sendRequest(http.MethodDelete, path, respData, reqData, false)
 }
 
-func (c *Client) patchAsJSON(path string, respData, reqData interface{}) (*Response, error) {
+func (c *Client) patchAsJSON(path string, respData, reqData any) (*Response, error) {
 	return c.sendRequest(http.MethodPatch, path, respData, reqData, true)
 }
 
-func (c *Client) postAsJSON(path string, respData, reqData interface{}) (*Response, error) {
+func (c *Client) postAsJSON(path string, respData, reqData any) (*Response, error) {
 	return c.sendRequest(http.MethodPost, path, respData, reqData, true)
 }
 
-func (c *Client) putAsJSON(path string, respData, reqData interface{}) (*Response, error) {
+func (c *Client) putAsJSON(path string, respData, reqData any) (*Response, error) {
 	return c.sendRequest(http.MethodPut, path, respData, reqData, true)
 }
 
-func (c *Client) sendRequest(method, path string, respData, reqData interface{}, hasJSONBody bool) (*Response, error) {
+func (c *Client) sendRequest(method, path string, respData, reqData any, hasJSONBody bool) (*Response, error) {
 	resp := &Response{}
 	if respData != nil {
 		resp.Data = respData
@@ -229,13 +229,15 @@ func (c *Client) sendRequest(method, path string, respData, reqData interface{},
 
 	err = c.doRequest(req, resp)
 	if err != nil {
-		return nil, err
+		if resp.StatusCode == 0 {
+			return nil, err
+		}
 	}
 
-	return resp, nil
+	return resp, err
 }
 
-func buildQueryString(req *http.Request, v interface{}) (string, error) {
+func buildQueryString(req *http.Request, v any) (string, error) {
 	isNil, err := isZero(v)
 	if err != nil {
 		return "", err
@@ -316,7 +318,7 @@ func buildQueryString(req *http.Request, v interface{}) (string, error) {
 	return query.Encode(), nil
 }
 
-func isZero(v interface{}) (bool, error) {
+func isZero(v any) (bool, error) {
 	t := reflect.TypeOf(v)
 	if !t.Comparable() {
 		return false, fmt.Errorf("type is not comparable: %v", t)
@@ -324,7 +326,7 @@ func isZero(v interface{}) (bool, error) {
 	return v == reflect.Zero(t).Interface(), nil
 }
 
-func (c *Client) newRequest(method, path string, data interface{}, hasJSONBody bool) (*http.Request, error) {
+func (c *Client) newRequest(method, path string, data any, hasJSONBody bool) (*http.Request, error) {
 	url := c.getBaseURL(path) + path
 
 	if hasJSONBody {
@@ -334,7 +336,7 @@ func (c *Client) newRequest(method, path string, data interface{}, hasJSONBody b
 	return c.newStandardRequest(method, url, data)
 }
 
-func (c *Client) newStandardRequest(method, url string, data interface{}) (*http.Request, error) {
+func (c *Client) newStandardRequest(method, url string, data any) (*http.Request, error) {
 	req, err := http.NewRequestWithContext(c.ctx, method, url, nil)
 	if err != nil {
 		return nil, err
@@ -354,7 +356,7 @@ func (c *Client) newStandardRequest(method, url string, data interface{}) (*http
 	return req, nil
 }
 
-func (c *Client) newJSONRequest(method, url string, data interface{}) (*http.Request, error) {
+func (c *Client) newJSONRequest(method, url string, data any) (*http.Request, error) {
 	b, err := json.Marshal(data)
 	if err != nil {
 		return nil, err
@@ -428,14 +430,13 @@ func (c *Client) doRequest(req *http.Request, resp *Response) error {
 		if err != nil {
 			return fmt.Errorf("failed to execute API request: %s", err.Error())
 		}
-		// TODO: To be checked along the general retry logic later on
-		defer response.Body.Close() //nolint:errcheck
 
 		resp.Header = response.Header
 
 		setResponseStatusCode(resp, "StatusCode", response.StatusCode)
 
 		bodyBytes, err := io.ReadAll(response.Body)
+		_ = response.Body.Close() // Close immediately after reading, before any retry logic
 		if err != nil {
 			return err
 		}
@@ -448,6 +449,14 @@ func (c *Client) doRequest(req *http.Request, resp *Response) error {
 
 		// Only attempt to decode the response if we have a response we can handle
 		if len(bodyBytes) > 0 && resp.StatusCode < http.StatusInternalServerError && !isHTML {
+			// Validate that the response is actually JSON before attempting to unmarshal
+			if !json.Valid(bodyBytes) {
+				preview := string(bodyBytes)
+				if len(preview) > 200 {
+					preview = preview[:200] + "..."
+				}
+				return fmt.Errorf("received non-JSON response (status %d): %s", resp.StatusCode, preview)
+			}
 			if resp.Data != nil && resp.StatusCode < http.StatusBadRequest {
 				// Successful request
 				err = json.Unmarshal(bodyBytes, &resp.Data)
@@ -471,6 +480,11 @@ func (c *Client) doRequest(req *http.Request, resp *Response) error {
 					}
 					if refreshed {
 						tokenRefreshed = true
+						resp.Error = ""
+						resp.ErrorStatus = 0
+						resp.ErrorMessage = ""
+						resp.StatusCode = 0
+						resp.Header = nil
 						// Try again now that we have a new token
 						c.setRequestHeaders(req)
 						continue
@@ -492,6 +506,11 @@ func (c *Client) doRequest(req *http.Request, resp *Response) error {
 
 			if rateLimitFunc != nil &&
 				c.lastResponse.StatusCode == http.StatusTooManyRequests {
+				resp.Error = ""
+				resp.ErrorStatus = 0
+				resp.ErrorMessage = ""
+				resp.StatusCode = 0
+				resp.Header = nil
 				// Rate limit exceeded, retry to send request after
 				// applying rate limiter callback
 				continue
@@ -608,7 +627,7 @@ func (c *Client) setRequestHeaders(req *http.Request) {
 	}
 }
 
-func setResponseStatusCode(v interface{}, fieldName string, code int) {
+func setResponseStatusCode(v any, fieldName string, code int) {
 	s := reflect.ValueOf(v).Elem()
 	field := s.FieldByName(fieldName)
 	field.SetInt(int64(code))
