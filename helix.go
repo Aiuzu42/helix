@@ -504,8 +504,7 @@ func (c *Client) doRequest(req *http.Request, resp *Response) error {
 			c.lastResponse = resp
 			c.mu.Unlock()
 
-			if rateLimitFunc != nil &&
-				c.lastResponse.StatusCode == http.StatusTooManyRequests {
+			if c.lastResponse.StatusCode == http.StatusTooManyRequests {
 				resp.Error = ""
 				resp.ErrorStatus = 0
 				resp.ErrorMessage = ""
