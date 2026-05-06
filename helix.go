@@ -428,6 +428,7 @@ func (c *Client) doRequest(req *http.Request, resp *Response) error {
 		if err != nil {
 			return fmt.Errorf("failed to execute API request: %s", err.Error())
 		}
+		// TODO: To be checked along the general retry logic later on
 		defer response.Body.Close() //nolint:errcheck
 
 		resp.Header = response.Header

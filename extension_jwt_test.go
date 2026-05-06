@@ -64,7 +64,7 @@ func TestCreateClaims(t *testing.T) {
 		t.Errorf("claims expiry less than 3 minutes")
 	}
 
-	expiration := time.Now().Add(10*time.Minute).UnixNano() / int64(time.Millisecond)
+	expiration := time.Now().Add(10 * time.Minute).Unix()
 	params.Expiration = expiration
 	claims, err = c.ExtensionCreateClaims(params)
 	if err != nil {
@@ -159,7 +159,7 @@ func TestVerifyJWT(t *testing.T) {
 	}
 
 	// generate expired claims to vefiry expiration behaviour
-	params.Expiration = time.Now().Add(-10*time.Minute).UnixNano() / int64(time.Millisecond)
+	params.Expiration = time.Now().Add(-10 * time.Minute).Unix()
 
 	claims, err = c.ExtensionCreateClaims(params)
 	if err != nil {

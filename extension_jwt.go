@@ -65,7 +65,7 @@ func (c *Client) ExtensionCreateClaims(
 
 	// default expiration to 3 minutes
 	if params.Expiration == 0 {
-		params.Expiration = time.Now().Add(time.Minute*3).UnixNano() / int64(time.Millisecond)
+		params.Expiration = time.Now().Add(time.Minute * 3).Unix()
 	}
 
 	// default channelID to 'all'
@@ -79,7 +79,7 @@ func (c *Client) ExtensionCreateClaims(
 		Role:        ExternalRole,
 		Permissions: params.PubSub,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.UnixMilli(params.Expiration)),
+			ExpiresAt: jwt.NewNumericDate(time.Unix(params.Expiration, 0)),
 		},
 	}
 

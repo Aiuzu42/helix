@@ -32,7 +32,7 @@ Follow the links below to their respective API usage examples:
 ## Getting Started
 
 ```shell
-go get -u github.com/nicklaw5/helix/v2
+go get -u github.com/Aiuzu42/helix/v2
 ```
 
 main.go:
