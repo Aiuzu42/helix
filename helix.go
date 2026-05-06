@@ -229,10 +229,12 @@ func (c *Client) sendRequest(method, path string, respData, reqData interface{},
 
 	err = c.doRequest(req, resp)
 	if err != nil {
-		return nil, err
+		if resp.StatusCode == 0 {
+			return nil, err
+		}
 	}
 
-	return resp, nil
+	return resp, err
 }
 
 func buildQueryString(req *http.Request, v interface{}) (string, error) {
@@ -428,14 +430,13 @@ func (c *Client) doRequest(req *http.Request, resp *Response) error {
 		if err != nil {
 			return fmt.Errorf("failed to execute API request: %s", err.Error())
 		}
-		// TODO: To be checked along the general retry logic later on
-		defer response.Body.Close() //nolint:errcheck
 
 		resp.Header = response.Header
 
 		setResponseStatusCode(resp, "StatusCode", response.StatusCode)
 
 		bodyBytes, err := io.ReadAll(response.Body)
+		_ = response.Body.Close() // Close immediately after reading, before any retry logic
 		if err != nil {
 			return err
 		}
@@ -448,6 +449,14 @@ func (c *Client) doRequest(req *http.Request, resp *Response) error {
 
 		// Only attempt to decode the response if we have a response we can handle
 		if len(bodyBytes) > 0 && resp.StatusCode < http.StatusInternalServerError && !isHTML {
+			// Validate that the response is actually JSON before attempting to unmarshal
+			if !json.Valid(bodyBytes) {
+				preview := string(bodyBytes)
+				if len(preview) > 200 {
+					preview = preview[:200] + "..."
+				}
+				return fmt.Errorf("received non-JSON response (status %d): %s", resp.StatusCode, preview)
+			}
 			if resp.Data != nil && resp.StatusCode < http.StatusBadRequest {
 				// Successful request
 				err = json.Unmarshal(bodyBytes, &resp.Data)
@@ -471,6 +480,9 @@ func (c *Client) doRequest(req *http.Request, resp *Response) error {
 					}
 					if refreshed {
 						tokenRefreshed = true
+						resp.Error = ""
+						resp.ErrorStatus = 0
+						resp.ErrorMessage = ""
 						// Try again now that we have a new token
 						c.setRequestHeaders(req)
 						continue
@@ -492,6 +504,9 @@ func (c *Client) doRequest(req *http.Request, resp *Response) error {
 
 			if rateLimitFunc != nil &&
 				c.lastResponse.StatusCode == http.StatusTooManyRequests {
+				resp.Error = ""
+				resp.ErrorStatus = 0
+				resp.ErrorMessage = ""
 				// Rate limit exceeded, retry to send request after
 				// applying rate limiter callback
 				continue
