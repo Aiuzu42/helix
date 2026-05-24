@@ -204,6 +204,10 @@ func (c *Client) delete(path string, respData, reqData any) (*Response, error) {
 	return c.sendRequest(http.MethodDelete, path, respData, reqData, false)
 }
 
+func (c *Client) patch(path string, respData, reqData any) (*Response, error) {
+	return c.sendRequest(http.MethodPatch, path, respData, reqData, false)
+}
+
 func (c *Client) patchAsJSON(path string, respData, reqData any) (*Response, error) {
 	return c.sendRequest(http.MethodPatch, path, respData, reqData, true)
 }

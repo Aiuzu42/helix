@@ -25,6 +25,7 @@
 
 - [x] Get Bits Leaderboard
 - [x] Get Cheermotes
+- [ ] Get Custom Power-up
 - [x] Get Extension Transactions
 
 ## Channels
@@ -34,7 +35,7 @@
 - [x] Get Channel Editors
 - [x] Get Followed Channels
 - [x] Get Channel Followers
-- [x] Get Users Follows *(deprecated — use Get Followed Channels / Get Channel Followers)*
+- [x-d] Get Users Follows *(deprecated — use Get Followed Channels / Get Channel Followers)*
 
 ## Channel Points
 
@@ -65,13 +66,23 @@
 - [x] Send Chat Announcement
 - [x] Send a Shoutout
 - [x] Send Chat Message
+- [x] Get Pinned Chat Message
+- [x] Pin Chat Message
+- [x] Update Pinned Chat Message
+- [x] Unpin Chat Message
 - [x] Get User Chat Color
 - [x] Update User Chat Color
 
 ## Clips
 
 - [x] Create Clip
+- [ ] Create Clip From VOD
 - [x] Get Clips
+- [ ] Get Clips Download
+
+## CCLs
+
+- [ ] Get Content Classification Labels
 
 ## Conduits
 
@@ -120,9 +131,24 @@
 
 - [x] Get Creator Goals
 
+## Guest Star
+
+- [ ] Get Channel Guest Star Settings
+- [ ] Update Channel Guest Star Settings
+- [ ] Get Guest Star Session
+- [ ] Create Guest Star Session
+- [ ] End Guest Star Session
+- [ ] Get Guest Star Invites
+- [ ] Send Guest Star Invite
+- [ ] Delete Guest Star Invite
+- [ ] Assign Guest Star Slot
+- [ ] Update Guest Star Slot
+- [ ] Delete Guest Star Slot
+- [ ] Update Guest Star Slot Settings
+
 ## Hype Train
 
-- [x] Get Hype Train Events *(deprecated — use Get Hype Train Status)*
+- [x-d] Get Hype Train Events *(deprecated — use Get Hype Train Status)*
 - [ ] Get Hype Train Status
 
 ## Moderation
@@ -150,6 +176,8 @@
 - [ ] Update Shield Mode Status
 - [ ] Get Shield Mode Status
 - [x] Warn Chat User
+- [x] Add Suspicious Status to Chat User
+- [x] Remove Suspicious Status From Chat User
 
 ## Polls
 
@@ -195,6 +223,11 @@
 - [x] Get Broadcaster Subscriptions
 - [x] Check User Subscription
 
+## Tags
+
+- [d] Get All Stream Tags
+- [d] Get Stream Tags
+
 ## Teams
 
 - [ ] Get Channel Teams
@@ -204,6 +237,7 @@
 
 - [x] Get Users
 - [x] Update User
+- [ ] Get Authorization By User
 - [x] Get User Block List
 - [x] Block User
 - [x] Unblock User
@@ -222,5 +256,5 @@
 
 ## Webhooks *(deprecated — replaced by EventSub)*
 
-- [x] Get Webhook Subscriptions
-- [x] Post Webhook Subscription
+- [x-d] Get Webhook Subscriptions
+- [x-d] Post Webhook Subscription

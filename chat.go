@@ -1,6 +1,9 @@
 package helix
 
-import "errors"
+import (
+	"errors"
+	"time"
+)
 
 type GetChatChattersParams struct {
 	BroadcasterID string `query:"broadcaster_id"`
@@ -448,6 +451,84 @@ type SendChatMessageParams struct {
 	ReplyParentMessageID string `json:"reply_parent_message_id,omitempty"`
 }
 
+type GetPinnedChatMessageParams struct {
+	BroadcasterID string `query:"broadcaster_id"`
+	ModeratorID   string `query:"moderator_id"`
+}
+
+type GetPinnedChatMessageResponse struct {
+	ResponseCommon
+	Data ManyPinnedChatMessages
+}
+
+type ManyPinnedChatMessages struct {
+	Messages []PinnedChatMessage `json:"data"`
+}
+
+type PinnedChatMessage struct {
+	MessageID         string               `json:"message_id"`
+	BroadcasterID     string               `json:"broadcaster_id"`
+	SenderUserID      string               `json:"sender_user_id"`
+	SenderUserLogin   string               `json:"sender_user_login"`
+	SenderUserName    string               `json:"sender_user_name"`
+	PinnedByUserID    string               `json:"pinned_by_user_id"`
+	PinnedByUserLogin string               `json:"pinned_by_user_login"`
+	PinnedByUserName  string               `json:"pinned_by_user_name"`
+	Message           PinnedMessageContent `json:"message"`
+	StartsAt          time.Time            `json:"starts_at"`
+	EndsAt            *time.Time           `json:"ends_at"`
+	UpdatedAt         time.Time            `json:"updated_at"`
+}
+
+type PinnedMessageContent struct {
+	Text      string                  `json:"text"`
+	Fragments []PinnedMessageFragment `json:"fragments"`
+}
+
+type PinnedMessageFragment struct {
+	Type      string                  `json:"type"`
+	Text      string                  `json:"text"`
+	Cheermote *PinnedMessageCheermote `json:"cheermote"`
+	Emote     *PinnedMessageEmote     `json:"emote"`
+	Mention   *PinnedMessageMention   `json:"mention"`
+}
+
+type PinnedMessageCheermote struct {
+	Prefix string `json:"prefix"`
+	Bits   int    `json:"bits"`
+	Tier   int    `json:"tier"`
+}
+
+type PinnedMessageEmote struct {
+	ID         string   `json:"id"`
+	EmoteSetID string   `json:"emote_set_id"`
+	OwnerID    string   `json:"owner_id"`
+	Format     []string `json:"format"`
+}
+
+type PinnedMessageMention struct {
+	UserID    string `json:"user_id"`
+	UserLogin string `json:"user_login"`
+	UserName  string `json:"user_name"`
+}
+
+type PinChatMessageParams struct {
+	BroadcasterID   string `query:"broadcaster_id"`
+	ModeratorID     string `query:"moderator_id"`
+	MessageID       string `query:"message_id"`
+	DurationSeconds int    `query:"duration_seconds"`
+}
+
+type UnpinChatMessageParams struct {
+	BroadcasterID string `query:"broadcaster_id"`
+	ModeratorID   string `query:"moderator_id"`
+	MessageID     string `query:"message_id"`
+}
+
+type PinChatMessageResponse struct {
+	ResponseCommon
+}
+
 type ChatMessageResponse struct {
 	ResponseCommon
 
@@ -502,4 +583,105 @@ func (c *Client) SendChatMessage(params *SendChatMessageParams) (*ChatMessageRes
 	chatMessages.Data.Messages = resp.Data.(*ManyChatMessages).Messages
 
 	return chatMessages, nil
+}
+
+// GetPinnedChatMessage gets the currently pinned message for the broadcaster's chat room.
+// Required scope: moderator:manage:chat_messages or moderator:read:chat_messages
+func (c *Client) GetPinnedChatMessage(params *GetPinnedChatMessageParams) (*GetPinnedChatMessageResponse, error) {
+	if params.BroadcasterID == "" {
+		return nil, errors.New("error: broadcaster id must be specified")
+	}
+
+	if params.ModeratorID == "" {
+		return nil, errors.New("error: moderator id must be specified")
+	}
+
+	resp, err := c.get("/chat/pins", &ManyPinnedChatMessages{}, params)
+	if err != nil {
+		return nil, err
+	}
+
+	pinnedMessages := &GetPinnedChatMessageResponse{}
+	resp.HydrateResponseCommon(&pinnedMessages.ResponseCommon)
+	pinnedMessages.Data.Messages = resp.Data.(*ManyPinnedChatMessages).Messages
+
+	return pinnedMessages, nil
+}
+
+// PinChatMessage pins a chat message for the broadcaster's chat room.
+// Required scope: moderator:manage:chat_messages
+func (c *Client) PinChatMessage(params *PinChatMessageParams) (*PinChatMessageResponse, error) {
+	if params.BroadcasterID == "" {
+		return nil, errors.New("error: broadcaster id must be specified")
+	}
+
+	if params.ModeratorID == "" {
+		return nil, errors.New("error: moderator id must be specified")
+	}
+
+	if params.MessageID == "" {
+		return nil, errors.New("error: message id must be specified")
+	}
+
+	resp, err := c.put("/chat/pins", nil, params)
+	if err != nil {
+		return nil, err
+	}
+
+	pinResp := &PinChatMessageResponse{}
+	resp.HydrateResponseCommon(&pinResp.ResponseCommon)
+
+	return pinResp, nil
+}
+
+// UpdatePinnedChatMessage updates an existing pinned chat message in the broadcaster's chat room.
+// Required scope: moderator:manage:chat_messages
+func (c *Client) UpdatePinnedChatMessage(params *PinChatMessageParams) (*PinChatMessageResponse, error) {
+	if params.BroadcasterID == "" {
+		return nil, errors.New("error: broadcaster id must be specified")
+	}
+
+	if params.ModeratorID == "" {
+		return nil, errors.New("error: moderator id must be specified")
+	}
+
+	if params.MessageID == "" {
+		return nil, errors.New("error: message id must be specified")
+	}
+
+	resp, err := c.patch("/chat/pins", nil, params)
+	if err != nil {
+		return nil, err
+	}
+
+	updateResp := &PinChatMessageResponse{}
+	resp.HydrateResponseCommon(&updateResp.ResponseCommon)
+
+	return updateResp, nil
+}
+
+// UnpinChatMessage unpins a pinned chat message in the broadcaster's chat room.
+// Required scope: moderator:manage:chat_messages
+func (c *Client) UnpinChatMessage(params *UnpinChatMessageParams) (*PinChatMessageResponse, error) {
+	if params.BroadcasterID == "" {
+		return nil, errors.New("error: broadcaster id must be specified")
+	}
+
+	if params.ModeratorID == "" {
+		return nil, errors.New("error: moderator id must be specified")
+	}
+
+	if params.MessageID == "" {
+		return nil, errors.New("error: message id must be specified")
+	}
+
+	resp, err := c.delete("/chat/pins", nil, params)
+	if err != nil {
+		return nil, err
+	}
+
+	unpinResp := &PinChatMessageResponse{}
+	resp.HydrateResponseCommon(&unpinResp.ResponseCommon)
+
+	return unpinResp, nil
 }
