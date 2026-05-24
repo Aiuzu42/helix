@@ -490,3 +490,96 @@ func (c *Client) SendModeratorWarnMessage(params *SendModeratorWarnChatMessagePa
 
 	return messageResponse, nil
 }
+
+type AddSuspiciousStatusToChatUserRequestBody struct {
+	UserID string `json:"user_id"`
+	Status string `json:"status"`
+}
+
+type AddSuspiciousStatusToChatUserParams struct {
+	BroadcasterID string                                   `query:"broadcaster_id"`
+	ModeratorID   string                                   `query:"moderator_id"`
+	Body          AddSuspiciousStatusToChatUserRequestBody `json:"data"`
+}
+
+type SuspiciousStatusAction struct {
+	UserID        string   `json:"user_id"`
+	BroadcasterID string   `json:"broadcaster_id"`
+	ModeratorID   string   `json:"moderator_id"`
+	UpdatedAt     Time     `json:"updated_at"`
+	Status        string   `json:"status"`
+	Types         []string `json:"types"`
+}
+
+type ManySuspiciousStatusActions struct {
+	Actions []SuspiciousStatusAction `json:"data"`
+}
+
+type AddSuspiciousStatusToChatUserResponse struct {
+	ResponseCommon
+	Data ManySuspiciousStatusActions
+}
+
+type RemoveSuspiciousStatusFromChatUserParams struct {
+	BroadcasterID string `query:"broadcaster_id"`
+	ModeratorID   string `query:"moderator_id"`
+	UserID        string `query:"user_id"`
+}
+
+type RemoveSuspiciousStatusFromChatUserResponse struct {
+	ResponseCommon
+	Data ManySuspiciousStatusActions
+}
+
+// AddSuspiciousStatusToChatUser adds a suspicious user status to a chatter on the broadcaster's channel.
+// Required scope: moderator:manage:suspicious_users
+func (c *Client) AddSuspiciousStatusToChatUser(params *AddSuspiciousStatusToChatUserParams) (*AddSuspiciousStatusToChatUserResponse, error) {
+	if params.BroadcasterID == "" {
+		return nil, errors.New("error: broadcaster id must be specified")
+	}
+	if params.ModeratorID == "" {
+		return nil, errors.New("error: moderator id must be specified")
+	}
+	if params.Body.UserID == "" {
+		return nil, errors.New("error: user id must be specified")
+	}
+	if params.Body.Status == "" {
+		return nil, errors.New("error: status must be specified")
+	}
+
+	resp, err := c.postAsJSON("/moderation/suspicious_users", &ManySuspiciousStatusActions{}, params)
+	if err != nil {
+		return nil, err
+	}
+
+	statusResp := &AddSuspiciousStatusToChatUserResponse{}
+	resp.HydrateResponseCommon(&statusResp.ResponseCommon)
+	statusResp.Data.Actions = resp.Data.(*ManySuspiciousStatusActions).Actions
+
+	return statusResp, nil
+}
+
+// RemoveSuspiciousStatusFromChatUser removes a suspicious user status from a chatter on the broadcaster's channel.
+// Required scope: moderator:manage:suspicious_users
+func (c *Client) RemoveSuspiciousStatusFromChatUser(params *RemoveSuspiciousStatusFromChatUserParams) (*RemoveSuspiciousStatusFromChatUserResponse, error) {
+	if params.BroadcasterID == "" {
+		return nil, errors.New("error: broadcaster id must be specified")
+	}
+	if params.ModeratorID == "" {
+		return nil, errors.New("error: moderator id must be specified")
+	}
+	if params.UserID == "" {
+		return nil, errors.New("error: user id must be specified")
+	}
+
+	resp, err := c.delete("/moderation/suspicious_users", &ManySuspiciousStatusActions{}, params)
+	if err != nil {
+		return nil, err
+	}
+
+	statusResp := &RemoveSuspiciousStatusFromChatUserResponse{}
+	resp.HydrateResponseCommon(&statusResp.ResponseCommon)
+	statusResp.Data.Actions = resp.Data.(*ManySuspiciousStatusActions).Actions
+
+	return statusResp, nil
+}

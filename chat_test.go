@@ -1063,3 +1063,435 @@ func TestSendChatMessage(t *testing.T) {
 		t.Errorf("expected error does match return error, got '%s'", err.Error())
 	}
 }
+
+func TestGetPinnedChatMessage(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		statusCode      int
+		options         *Options
+		params          *GetPinnedChatMessageParams
+		respBody        string
+		validationErr   string
+		expectEndsAtNil bool
+	}{
+		{
+			http.StatusBadRequest,
+			&Options{ClientID: "my-client-id"},
+			&GetPinnedChatMessageParams{BroadcasterID: "", ModeratorID: "5678"},
+			"",
+			"error: broadcaster id must be specified",
+			false,
+		},
+		{
+			http.StatusBadRequest,
+			&Options{ClientID: "my-client-id"},
+			&GetPinnedChatMessageParams{BroadcasterID: "1234", ModeratorID: ""},
+			"",
+			"error: moderator id must be specified",
+			false,
+		},
+		{
+			http.StatusOK,
+			&Options{ClientID: "my-client-id"},
+			&GetPinnedChatMessageParams{BroadcasterID: "197886470", ModeratorID: "141981764"},
+			`{"data":[{"message_id":"abc-def-123-456","broadcaster_id":"197886470","sender_user_id":"12826","sender_user_login":"twitch","sender_user_name":"Twitch","pinned_by_user_id":"141981764","pinned_by_user_login":"twitchdev","pinned_by_user_name":"TwitchDev","message":{"text":"Welcome! bleedPurple Type !rules","fragments":[{"type":"text","text":"Welcome! ","cheermote":null,"emote":null,"mention":null},{"type":"emote","text":"bleedPurple","cheermote":null,"emote":{"id":"62835","emote_set_id":"0","owner_id":"0","format":["static"]},"mention":null}]},"starts_at":"2026-05-06T12:30:00Z","ends_at":"2026-05-06T12:35:00Z","updated_at":"2026-05-06T12:30:00Z"}]}`,
+			"",
+			false,
+		},
+		{
+			http.StatusOK,
+			&Options{ClientID: "my-client-id"},
+			&GetPinnedChatMessageParams{BroadcasterID: "197886470", ModeratorID: "141981764"},
+			`{"data":[{"message_id":"abc-def-123-456","broadcaster_id":"197886470","sender_user_id":"12826","sender_user_login":"twitch","sender_user_name":"Twitch","pinned_by_user_id":"141981764","pinned_by_user_login":"twitchdev","pinned_by_user_name":"TwitchDev","message":{"text":"Welcome! bleedPurple Type !rules","fragments":[{"type":"text","text":"Welcome! ","cheermote":null,"emote":null,"mention":null},{"type":"emote","text":"bleedPurple","cheermote":null,"emote":{"id":"62835","emote_set_id":"0","owner_id":"0","format":["static"]},"mention":null}]},"starts_at":"2026-05-06T12:30:00Z","ends_at":null,"updated_at":"2026-05-06T12:30:00Z"}]}`,
+			"",
+			true,
+		},
+		{
+			http.StatusBadRequest,
+			&Options{ClientID: "my-client-id"},
+			&GetPinnedChatMessageParams{BroadcasterID: "1234", ModeratorID: "5678"},
+			`{"error":"Bad Request","status":400,"message":"A required query parameter is missing."}`,
+			"",
+			false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		c := newMockClient(testCase.options, newMockHandler(testCase.statusCode, testCase.respBody, nil))
+
+		resp, err := c.GetPinnedChatMessage(testCase.params)
+		if err != nil {
+			if err.Error() == testCase.validationErr {
+				continue
+			}
+			t.Errorf("Unmatched error, expected '%v', got '%v'", testCase.validationErr, err)
+			continue
+		}
+
+		if resp.StatusCode != testCase.statusCode {
+			t.Errorf("expected status code to be %d, got %d", testCase.statusCode, resp.StatusCode)
+		}
+
+		if resp.StatusCode == http.StatusBadRequest {
+			if resp.Error != "Bad Request" {
+				t.Errorf("expected error to be %s, got %s", "Bad Request", resp.Error)
+			}
+
+			if resp.ErrorStatus != http.StatusBadRequest {
+				t.Errorf("expected error status to be %d, got %d", http.StatusBadRequest, resp.ErrorStatus)
+			}
+
+			if resp.ErrorMessage != "A required query parameter is missing." {
+				t.Errorf("expected error message to be %s, got %s", "A required query parameter is missing.", resp.ErrorMessage)
+			}
+
+			continue
+		}
+
+		if len(resp.Data.Messages) != 1 {
+			t.Errorf("expected %d pinned message, got %d", 1, len(resp.Data.Messages))
+		}
+
+		if resp.Data.Messages[0].MessageID != "abc-def-123-456" {
+			t.Errorf("expected message id to be %s, got %s", "abc-def-123-456", resp.Data.Messages[0].MessageID)
+		}
+
+		if len(resp.Data.Messages[0].Message.Fragments) != 2 {
+			t.Errorf("expected %d fragments, got %d", 2, len(resp.Data.Messages[0].Message.Fragments))
+		}
+
+		if resp.Data.Messages[0].Message.Fragments[1].Emote == nil {
+			t.Error("expected emote fragment metadata to be present")
+		}
+
+		if testCase.expectEndsAtNil && resp.Data.Messages[0].EndsAt != nil {
+			t.Error("expected ends_at to be nil when Twitch returns null")
+		}
+	}
+
+	options := &Options{
+		ClientID: "my-client-id",
+		HTTPClient: &badMockHTTPClient{
+			newMockHandler(0, "", nil),
+		},
+	}
+	c := &Client{
+		opts: options,
+		ctx:  context.Background(),
+	}
+
+	_, err := c.GetPinnedChatMessage(&GetPinnedChatMessageParams{BroadcasterID: "123", ModeratorID: "456"})
+	if err == nil {
+		t.Error("expected error but got nil")
+	}
+
+	const expectedHTTPError = "failed to execute API request: Oops, that's bad :("
+
+	if err.Error() != expectedHTTPError {
+		t.Errorf("expected error does match return error, got '%s'", err.Error())
+	}
+}
+
+func TestPinChatMessage(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		statusCode    int
+		options       *Options
+		params        *PinChatMessageParams
+		respBody      string
+		validationErr string
+	}{
+		{
+			http.StatusBadRequest,
+			&Options{ClientID: "my-client-id"},
+			&PinChatMessageParams{BroadcasterID: "", ModeratorID: "5678", MessageID: "abc-def-123"},
+			"",
+			"error: broadcaster id must be specified",
+		},
+		{
+			http.StatusBadRequest,
+			&Options{ClientID: "my-client-id"},
+			&PinChatMessageParams{BroadcasterID: "1234", ModeratorID: "", MessageID: "abc-def-123"},
+			"",
+			"error: moderator id must be specified",
+		},
+		{
+			http.StatusBadRequest,
+			&Options{ClientID: "my-client-id"},
+			&PinChatMessageParams{BroadcasterID: "1234", ModeratorID: "5678", MessageID: ""},
+			"",
+			"error: message id must be specified",
+		},
+		{
+			http.StatusNoContent,
+			&Options{ClientID: "my-client-id"},
+			&PinChatMessageParams{BroadcasterID: "197886470", ModeratorID: "141981764", MessageID: "abc-def-123", DurationSeconds: 300},
+			"",
+			"",
+		},
+		{
+			http.StatusUnauthorized,
+			&Options{ClientID: "my-client-id"},
+			&PinChatMessageParams{BroadcasterID: "197886470", ModeratorID: "141981764", MessageID: "abc-def-123"},
+			`{"error":"Unauthorized","status":401,"message":"The access token must include the moderator:manage:chat_messages scope."}`,
+			"",
+		},
+	}
+
+	for _, testCase := range testCases {
+		c := newMockClient(testCase.options, newMockHandler(testCase.statusCode, testCase.respBody, nil))
+
+		resp, err := c.PinChatMessage(testCase.params)
+		if err != nil {
+			if err.Error() == testCase.validationErr {
+				continue
+			}
+			t.Errorf("Unmatched error, expected '%v', got '%v'", testCase.validationErr, err)
+			continue
+		}
+
+		if resp.StatusCode != testCase.statusCode {
+			t.Errorf("expected status code to be %d, got %d", testCase.statusCode, resp.StatusCode)
+		}
+
+		if resp.StatusCode == http.StatusUnauthorized {
+			if resp.Error != "Unauthorized" {
+				t.Errorf("expected error to be %s, got %s", "Unauthorized", resp.Error)
+			}
+
+			if resp.ErrorStatus != http.StatusUnauthorized {
+				t.Errorf("expected error status to be %d, got %d", http.StatusUnauthorized, resp.ErrorStatus)
+			}
+
+			if resp.ErrorMessage != "The access token must include the moderator:manage:chat_messages scope." {
+				t.Errorf("expected error message to be %s, got %s", "The access token must include the moderator:manage:chat_messages scope.", resp.ErrorMessage)
+			}
+		}
+	}
+
+	options := &Options{
+		ClientID: "my-client-id",
+		HTTPClient: &badMockHTTPClient{
+			newMockHandler(0, "", nil),
+		},
+	}
+	c := &Client{
+		opts: options,
+		ctx:  context.Background(),
+	}
+
+	_, err := c.PinChatMessage(&PinChatMessageParams{BroadcasterID: "123", ModeratorID: "456", MessageID: "abc-def-123"})
+	if err == nil {
+		t.Error("expected error but got nil")
+	}
+
+	const expectedHTTPError = "failed to execute API request: Oops, that's bad :("
+
+	if err.Error() != expectedHTTPError {
+		t.Errorf("expected error does match return error, got '%s'", err.Error())
+	}
+}
+
+func TestUpdatePinnedChatMessage(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		statusCode    int
+		options       *Options
+		params        *PinChatMessageParams
+		respBody      string
+		validationErr string
+	}{
+		{
+			http.StatusBadRequest,
+			&Options{ClientID: "my-client-id"},
+			&PinChatMessageParams{BroadcasterID: "", ModeratorID: "5678", MessageID: "abc-def-123"},
+			"",
+			"error: broadcaster id must be specified",
+		},
+		{
+			http.StatusBadRequest,
+			&Options{ClientID: "my-client-id"},
+			&PinChatMessageParams{BroadcasterID: "1234", ModeratorID: "", MessageID: "abc-def-123"},
+			"",
+			"error: moderator id must be specified",
+		},
+		{
+			http.StatusBadRequest,
+			&Options{ClientID: "my-client-id"},
+			&PinChatMessageParams{BroadcasterID: "1234", ModeratorID: "5678", MessageID: ""},
+			"",
+			"error: message id must be specified",
+		},
+		{
+			http.StatusNoContent,
+			&Options{ClientID: "my-client-id"},
+			&PinChatMessageParams{BroadcasterID: "197886470", ModeratorID: "141981764", MessageID: "abc-def-123", DurationSeconds: 600},
+			"",
+			"",
+		},
+		{
+			http.StatusUnauthorized,
+			&Options{ClientID: "my-client-id"},
+			&PinChatMessageParams{BroadcasterID: "197886470", ModeratorID: "141981764", MessageID: "abc-def-123"},
+			`{"error":"Unauthorized","status":401,"message":"The access token must include the moderator:manage:chat_messages scope."}`,
+			"",
+		},
+	}
+
+	for _, testCase := range testCases {
+		c := newMockClient(testCase.options, newMockHandler(testCase.statusCode, testCase.respBody, nil))
+
+		resp, err := c.UpdatePinnedChatMessage(testCase.params)
+		if err != nil {
+			if err.Error() == testCase.validationErr {
+				continue
+			}
+			t.Errorf("Unmatched error, expected '%v', got '%v'", testCase.validationErr, err)
+			continue
+		}
+
+		if resp.StatusCode != testCase.statusCode {
+			t.Errorf("expected status code to be %d, got %d", testCase.statusCode, resp.StatusCode)
+		}
+
+		if resp.StatusCode == http.StatusUnauthorized {
+			if resp.Error != "Unauthorized" {
+				t.Errorf("expected error to be %s, got %s", "Unauthorized", resp.Error)
+			}
+
+			if resp.ErrorStatus != http.StatusUnauthorized {
+				t.Errorf("expected error status to be %d, got %d", http.StatusUnauthorized, resp.ErrorStatus)
+			}
+
+			if resp.ErrorMessage != "The access token must include the moderator:manage:chat_messages scope." {
+				t.Errorf("expected error message to be %s, got %s", "The access token must include the moderator:manage:chat_messages scope.", resp.ErrorMessage)
+			}
+		}
+	}
+
+	options := &Options{
+		ClientID: "my-client-id",
+		HTTPClient: &badMockHTTPClient{
+			newMockHandler(0, "", nil),
+		},
+	}
+	c := &Client{
+		opts: options,
+		ctx:  context.Background(),
+	}
+
+	_, err := c.UpdatePinnedChatMessage(&PinChatMessageParams{BroadcasterID: "123", ModeratorID: "456", MessageID: "abc-def-123"})
+	if err == nil {
+		t.Error("expected error but got nil")
+	}
+
+	const expectedHTTPError = "failed to execute API request: Oops, that's bad :("
+
+	if err.Error() != expectedHTTPError {
+		t.Errorf("expected error does match return error, got '%s'", err.Error())
+	}
+}
+
+func TestUnpinChatMessage(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		statusCode    int
+		options       *Options
+		params        *UnpinChatMessageParams
+		respBody      string
+		validationErr string
+	}{
+		{
+			http.StatusBadRequest,
+			&Options{ClientID: "my-client-id"},
+			&UnpinChatMessageParams{BroadcasterID: "", ModeratorID: "5678", MessageID: "abc-def-123"},
+			"",
+			"error: broadcaster id must be specified",
+		},
+		{
+			http.StatusBadRequest,
+			&Options{ClientID: "my-client-id"},
+			&UnpinChatMessageParams{BroadcasterID: "1234", ModeratorID: "", MessageID: "abc-def-123"},
+			"",
+			"error: moderator id must be specified",
+		},
+		{
+			http.StatusBadRequest,
+			&Options{ClientID: "my-client-id"},
+			&UnpinChatMessageParams{BroadcasterID: "1234", ModeratorID: "5678", MessageID: ""},
+			"",
+			"error: message id must be specified",
+		},
+		{
+			http.StatusNoContent,
+			&Options{ClientID: "my-client-id"},
+			&UnpinChatMessageParams{BroadcasterID: "197886470", ModeratorID: "141981764", MessageID: "abc-def-123"},
+			"",
+			"",
+		},
+		{
+			http.StatusUnauthorized,
+			&Options{ClientID: "my-client-id"},
+			&UnpinChatMessageParams{BroadcasterID: "197886470", ModeratorID: "141981764", MessageID: "abc-def-123"},
+			`{"error":"Unauthorized","status":401,"message":"The access token must include the moderator:manage:chat_messages scope."}`,
+			"",
+		},
+	}
+
+	for _, testCase := range testCases {
+		c := newMockClient(testCase.options, newMockHandler(testCase.statusCode, testCase.respBody, nil))
+
+		resp, err := c.UnpinChatMessage(testCase.params)
+		if err != nil {
+			if err.Error() == testCase.validationErr {
+				continue
+			}
+			t.Errorf("Unmatched error, expected '%v', got '%v'", testCase.validationErr, err)
+			continue
+		}
+
+		if resp.StatusCode != testCase.statusCode {
+			t.Errorf("expected status code to be %d, got %d", testCase.statusCode, resp.StatusCode)
+		}
+
+		if resp.StatusCode == http.StatusUnauthorized {
+			if resp.Error != "Unauthorized" {
+				t.Errorf("expected error to be %s, got %s", "Unauthorized", resp.Error)
+			}
+
+			if resp.ErrorStatus != http.StatusUnauthorized {
+				t.Errorf("expected error status to be %d, got %d", http.StatusUnauthorized, resp.ErrorStatus)
+			}
+
+			if resp.ErrorMessage != "The access token must include the moderator:manage:chat_messages scope." {
+				t.Errorf("expected error message to be %s, got %s", "The access token must include the moderator:manage:chat_messages scope.", resp.ErrorMessage)
+			}
+		}
+	}
+
+	options := &Options{
+		ClientID: "my-client-id",
+		HTTPClient: &badMockHTTPClient{
+			newMockHandler(0, "", nil),
+		},
+	}
+	c := &Client{
+		opts: options,
+		ctx:  context.Background(),
+	}
+
+	_, err := c.UnpinChatMessage(&UnpinChatMessageParams{BroadcasterID: "123", ModeratorID: "456", MessageID: "abc-def-123"})
+	if err == nil {
+		t.Error("expected error but got nil")
+	}
+
+	const expectedHTTPError = "failed to execute API request: Oops, that's bad :("
+
+	if err.Error() != expectedHTTPError {
+		t.Errorf("expected error does match return error, got '%s'", err.Error())
+	}
+}

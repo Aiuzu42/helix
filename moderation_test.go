@@ -1294,3 +1294,230 @@ func TestSendModeratorWarnMessage(t *testing.T) {
 		t.Error("expected error does match return error")
 	}
 }
+
+func TestAddSuspiciousStatusToChatUser(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		statusCode    int
+		options       *Options
+		params        *AddSuspiciousStatusToChatUserParams
+		respBody      string
+		validationErr string
+	}{
+		{
+			http.StatusBadRequest,
+			&Options{ClientID: "my-client-id"},
+			&AddSuspiciousStatusToChatUserParams{BroadcasterID: "", ModeratorID: "12826", Body: AddSuspiciousStatusToChatUserRequestBody{UserID: "9876", Status: "RESTRICTED"}},
+			"",
+			"error: broadcaster id must be specified",
+		},
+		{
+			http.StatusBadRequest,
+			&Options{ClientID: "my-client-id"},
+			&AddSuspiciousStatusToChatUserParams{BroadcasterID: "141981764", ModeratorID: "", Body: AddSuspiciousStatusToChatUserRequestBody{UserID: "9876", Status: "RESTRICTED"}},
+			"",
+			"error: moderator id must be specified",
+		},
+		{
+			http.StatusBadRequest,
+			&Options{ClientID: "my-client-id"},
+			&AddSuspiciousStatusToChatUserParams{BroadcasterID: "141981764", ModeratorID: "12826", Body: AddSuspiciousStatusToChatUserRequestBody{UserID: "", Status: "RESTRICTED"}},
+			"",
+			"error: user id must be specified",
+		},
+		{
+			http.StatusBadRequest,
+			&Options{ClientID: "my-client-id"},
+			&AddSuspiciousStatusToChatUserParams{BroadcasterID: "141981764", ModeratorID: "12826", Body: AddSuspiciousStatusToChatUserRequestBody{UserID: "9876", Status: ""}},
+			"",
+			"error: status must be specified",
+		},
+		{
+			http.StatusOK,
+			&Options{ClientID: "my-client-id"},
+			&AddSuspiciousStatusToChatUserParams{BroadcasterID: "141981764", ModeratorID: "12826", Body: AddSuspiciousStatusToChatUserRequestBody{UserID: "9876", Status: "RESTRICTED"}},
+			`{"data":[{"user_id":"9876","broadcaster_id":"141981764","moderator_id":"12826","updated_at":"2025-12-01T23:08:18+00:00","status":"RESTRICTED","types":["MANUALLY_ADDED"]}]}`,
+			"",
+		},
+		{
+			http.StatusUnauthorized,
+			&Options{ClientID: "my-client-id"},
+			&AddSuspiciousStatusToChatUserParams{BroadcasterID: "141981764", ModeratorID: "12826", Body: AddSuspiciousStatusToChatUserRequestBody{UserID: "9876", Status: "RESTRICTED"}},
+			`{"error":"Unauthorized","status":401,"message":"The user access token must include the moderator:manage:suspicious_users scope."}`,
+			"",
+		},
+	}
+
+	for _, testCase := range testCases {
+		c := newMockClient(testCase.options, newMockHandler(testCase.statusCode, testCase.respBody, nil))
+
+		resp, err := c.AddSuspiciousStatusToChatUser(testCase.params)
+		if err != nil {
+			if err.Error() == testCase.validationErr {
+				continue
+			}
+			t.Errorf("Unmatched error, expected '%v', got '%v'", testCase.validationErr, err)
+			continue
+		}
+
+		if resp.StatusCode != testCase.statusCode {
+			t.Errorf("expected status code to be %d, got %d", testCase.statusCode, resp.StatusCode)
+		}
+
+		if resp.StatusCode == http.StatusUnauthorized {
+			if resp.Error != "Unauthorized" {
+				t.Errorf("expected error to be %s, got %s", "Unauthorized", resp.Error)
+			}
+
+			if resp.ErrorStatus != http.StatusUnauthorized {
+				t.Errorf("expected error status to be %d, got %d", http.StatusUnauthorized, resp.ErrorStatus)
+			}
+
+			if resp.ErrorMessage != "The user access token must include the moderator:manage:suspicious_users scope." {
+				t.Errorf("expected error message to be %s, got %s", "The user access token must include the moderator:manage:suspicious_users scope.", resp.ErrorMessage)
+			}
+			continue
+		}
+
+		if resp.StatusCode == http.StatusOK {
+			if len(resp.Data.Actions) != 1 {
+				t.Errorf("expected %d action, got %d", 1, len(resp.Data.Actions))
+			}
+
+			if len(resp.Data.Actions) > 0 && resp.Data.Actions[0].Status != "RESTRICTED" {
+				t.Errorf("expected status to be %s, got %s", "RESTRICTED", resp.Data.Actions[0].Status)
+			}
+		}
+	}
+
+	options := &Options{
+		ClientID: "my-client-id",
+		HTTPClient: &badMockHTTPClient{
+			newMockHandler(0, "", nil),
+		},
+	}
+	c := &Client{
+		opts: options,
+		ctx:  context.Background(),
+	}
+
+	_, err := c.AddSuspiciousStatusToChatUser(&AddSuspiciousStatusToChatUserParams{BroadcasterID: "141981764", ModeratorID: "12826", Body: AddSuspiciousStatusToChatUserRequestBody{UserID: "9876", Status: "RESTRICTED"}})
+	if err == nil {
+		t.Error("expected error but got nil")
+	}
+
+	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
+		t.Error("expected error does match return error")
+	}
+}
+
+func TestRemoveSuspiciousStatusFromChatUser(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		statusCode    int
+		options       *Options
+		params        *RemoveSuspiciousStatusFromChatUserParams
+		respBody      string
+		validationErr string
+	}{
+		{
+			http.StatusBadRequest,
+			&Options{ClientID: "my-client-id"},
+			&RemoveSuspiciousStatusFromChatUserParams{BroadcasterID: "", ModeratorID: "12826", UserID: "9876"},
+			"",
+			"error: broadcaster id must be specified",
+		},
+		{
+			http.StatusBadRequest,
+			&Options{ClientID: "my-client-id"},
+			&RemoveSuspiciousStatusFromChatUserParams{BroadcasterID: "141981764", ModeratorID: "", UserID: "9876"},
+			"",
+			"error: moderator id must be specified",
+		},
+		{
+			http.StatusBadRequest,
+			&Options{ClientID: "my-client-id"},
+			&RemoveSuspiciousStatusFromChatUserParams{BroadcasterID: "141981764", ModeratorID: "12826", UserID: ""},
+			"",
+			"error: user id must be specified",
+		},
+		{
+			http.StatusOK,
+			&Options{ClientID: "my-client-id"},
+			&RemoveSuspiciousStatusFromChatUserParams{BroadcasterID: "141981764", ModeratorID: "12826", UserID: "9876"},
+			`{"data":[{"user_id":"9876","broadcaster_id":"141981764","moderator_id":"12826","updated_at":"2025-12-01T23:08:18+00:00","status":"NO_TREATMENT","types":["MANUALLY_ADDED"]}]}`,
+			"",
+		},
+		{
+			http.StatusUnauthorized,
+			&Options{ClientID: "my-client-id"},
+			&RemoveSuspiciousStatusFromChatUserParams{BroadcasterID: "141981764", ModeratorID: "12826", UserID: "9876"},
+			`{"error":"Unauthorized","status":401,"message":"The user access token must include the moderator:manage:suspicious_users scope."}`,
+			"",
+		},
+	}
+
+	for _, testCase := range testCases {
+		c := newMockClient(testCase.options, newMockHandler(testCase.statusCode, testCase.respBody, nil))
+
+		resp, err := c.RemoveSuspiciousStatusFromChatUser(testCase.params)
+		if err != nil {
+			if err.Error() == testCase.validationErr {
+				continue
+			}
+			t.Errorf("Unmatched error, expected '%v', got '%v'", testCase.validationErr, err)
+			continue
+		}
+
+		if resp.StatusCode != testCase.statusCode {
+			t.Errorf("expected status code to be %d, got %d", testCase.statusCode, resp.StatusCode)
+		}
+
+		if resp.StatusCode == http.StatusUnauthorized {
+			if resp.Error != "Unauthorized" {
+				t.Errorf("expected error to be %s, got %s", "Unauthorized", resp.Error)
+			}
+
+			if resp.ErrorStatus != http.StatusUnauthorized {
+				t.Errorf("expected error status to be %d, got %d", http.StatusUnauthorized, resp.ErrorStatus)
+			}
+
+			if resp.ErrorMessage != "The user access token must include the moderator:manage:suspicious_users scope." {
+				t.Errorf("expected error message to be %s, got %s", "The user access token must include the moderator:manage:suspicious_users scope.", resp.ErrorMessage)
+			}
+			continue
+		}
+
+		if resp.StatusCode == http.StatusOK {
+			if len(resp.Data.Actions) != 1 {
+				t.Errorf("expected %d action, got %d", 1, len(resp.Data.Actions))
+			}
+
+			if len(resp.Data.Actions) > 0 && resp.Data.Actions[0].Status != "NO_TREATMENT" {
+				t.Errorf("expected status to be %s, got %s", "NO_TREATMENT", resp.Data.Actions[0].Status)
+			}
+		}
+	}
+
+	options := &Options{
+		ClientID: "my-client-id",
+		HTTPClient: &badMockHTTPClient{
+			newMockHandler(0, "", nil),
+		},
+	}
+	c := &Client{
+		opts: options,
+		ctx:  context.Background(),
+	}
+
+	_, err := c.RemoveSuspiciousStatusFromChatUser(&RemoveSuspiciousStatusFromChatUserParams{BroadcasterID: "141981764", ModeratorID: "12826", UserID: "9876"})
+	if err == nil {
+		t.Error("expected error but got nil")
+	}
+
+	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
+		t.Error("expected error does match return error")
+	}
+}
