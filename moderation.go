@@ -497,9 +497,9 @@ type AddSuspiciousStatusToChatUserRequestBody struct {
 }
 
 type AddSuspiciousStatusToChatUserParams struct {
-	BroadcasterID string                                   `query:"broadcaster_id"`
-	ModeratorID   string                                   `query:"moderator_id"`
-	Body          AddSuspiciousStatusToChatUserRequestBody `json:"data"`
+	BroadcasterID string `query:"broadcaster_id" json:"-"`
+	ModeratorID   string `query:"moderator_id" json:"-"`
+	AddSuspiciousStatusToChatUserRequestBody
 }
 
 type SuspiciousStatusAction struct {
@@ -540,10 +540,10 @@ func (c *Client) AddSuspiciousStatusToChatUser(params *AddSuspiciousStatusToChat
 	if params.ModeratorID == "" {
 		return nil, errors.New("error: moderator id must be specified")
 	}
-	if params.Body.UserID == "" {
+	if params.UserID == "" {
 		return nil, errors.New("error: user id must be specified")
 	}
-	if params.Body.Status == "" {
+	if params.Status == "" {
 		return nil, errors.New("error: status must be specified")
 	}
 

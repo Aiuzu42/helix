@@ -1308,42 +1308,42 @@ func TestAddSuspiciousStatusToChatUser(t *testing.T) {
 		{
 			http.StatusBadRequest,
 			&Options{ClientID: "my-client-id"},
-			&AddSuspiciousStatusToChatUserParams{BroadcasterID: "", ModeratorID: "12826", Body: AddSuspiciousStatusToChatUserRequestBody{UserID: "9876", Status: "RESTRICTED"}},
+			&AddSuspiciousStatusToChatUserParams{BroadcasterID: "", ModeratorID: "12826", AddSuspiciousStatusToChatUserRequestBody: AddSuspiciousStatusToChatUserRequestBody{UserID: "9876", Status: "RESTRICTED"}},
 			"",
 			"error: broadcaster id must be specified",
 		},
 		{
 			http.StatusBadRequest,
 			&Options{ClientID: "my-client-id"},
-			&AddSuspiciousStatusToChatUserParams{BroadcasterID: "141981764", ModeratorID: "", Body: AddSuspiciousStatusToChatUserRequestBody{UserID: "9876", Status: "RESTRICTED"}},
+			&AddSuspiciousStatusToChatUserParams{BroadcasterID: "141981764", ModeratorID: "", AddSuspiciousStatusToChatUserRequestBody: AddSuspiciousStatusToChatUserRequestBody{UserID: "9876", Status: "RESTRICTED"}},
 			"",
 			"error: moderator id must be specified",
 		},
 		{
 			http.StatusBadRequest,
 			&Options{ClientID: "my-client-id"},
-			&AddSuspiciousStatusToChatUserParams{BroadcasterID: "141981764", ModeratorID: "12826", Body: AddSuspiciousStatusToChatUserRequestBody{UserID: "", Status: "RESTRICTED"}},
+			&AddSuspiciousStatusToChatUserParams{BroadcasterID: "141981764", ModeratorID: "12826", AddSuspiciousStatusToChatUserRequestBody: AddSuspiciousStatusToChatUserRequestBody{UserID: "", Status: "RESTRICTED"}},
 			"",
 			"error: user id must be specified",
 		},
 		{
 			http.StatusBadRequest,
 			&Options{ClientID: "my-client-id"},
-			&AddSuspiciousStatusToChatUserParams{BroadcasterID: "141981764", ModeratorID: "12826", Body: AddSuspiciousStatusToChatUserRequestBody{UserID: "9876", Status: ""}},
+			&AddSuspiciousStatusToChatUserParams{BroadcasterID: "141981764", ModeratorID: "12826", AddSuspiciousStatusToChatUserRequestBody: AddSuspiciousStatusToChatUserRequestBody{UserID: "9876", Status: ""}},
 			"",
 			"error: status must be specified",
 		},
 		{
 			http.StatusOK,
 			&Options{ClientID: "my-client-id"},
-			&AddSuspiciousStatusToChatUserParams{BroadcasterID: "141981764", ModeratorID: "12826", Body: AddSuspiciousStatusToChatUserRequestBody{UserID: "9876", Status: "RESTRICTED"}},
+			&AddSuspiciousStatusToChatUserParams{BroadcasterID: "141981764", ModeratorID: "12826", AddSuspiciousStatusToChatUserRequestBody: AddSuspiciousStatusToChatUserRequestBody{UserID: "9876", Status: "RESTRICTED"}},
 			`{"data":[{"user_id":"9876","broadcaster_id":"141981764","moderator_id":"12826","updated_at":"2025-12-01T23:08:18+00:00","status":"RESTRICTED","types":["MANUALLY_ADDED"]}]}`,
 			"",
 		},
 		{
 			http.StatusUnauthorized,
 			&Options{ClientID: "my-client-id"},
-			&AddSuspiciousStatusToChatUserParams{BroadcasterID: "141981764", ModeratorID: "12826", Body: AddSuspiciousStatusToChatUserRequestBody{UserID: "9876", Status: "RESTRICTED"}},
+			&AddSuspiciousStatusToChatUserParams{BroadcasterID: "141981764", ModeratorID: "12826", AddSuspiciousStatusToChatUserRequestBody: AddSuspiciousStatusToChatUserRequestBody{UserID: "9876", Status: "RESTRICTED"}},
 			`{"error":"Unauthorized","status":401,"message":"The user access token must include the moderator:manage:suspicious_users scope."}`,
 			"",
 		},
@@ -1402,7 +1402,7 @@ func TestAddSuspiciousStatusToChatUser(t *testing.T) {
 		ctx:  context.Background(),
 	}
 
-	_, err := c.AddSuspiciousStatusToChatUser(&AddSuspiciousStatusToChatUserParams{BroadcasterID: "141981764", ModeratorID: "12826", Body: AddSuspiciousStatusToChatUserRequestBody{UserID: "9876", Status: "RESTRICTED"}})
+	_, err := c.AddSuspiciousStatusToChatUser(&AddSuspiciousStatusToChatUserParams{BroadcasterID: "141981764", ModeratorID: "12826", AddSuspiciousStatusToChatUserRequestBody: AddSuspiciousStatusToChatUserRequestBody{UserID: "9876", Status: "RESTRICTED"}})
 	if err == nil {
 		t.Error("expected error but got nil")
 	}
