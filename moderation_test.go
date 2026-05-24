@@ -92,7 +92,7 @@ func TestGetBannedUsers(t *testing.T) {
 	}
 
 	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
-		t.Error("expected error does match return error")
+		t.Error("expected error does not match return error")
 	}
 }
 
@@ -203,7 +203,7 @@ func TestBanUser(t *testing.T) {
 	}
 
 	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
-		t.Error("expected error does match return error")
+		t.Error("expected error does not match return error")
 	}
 }
 
@@ -274,7 +274,7 @@ func TestUnbanUser(t *testing.T) {
 	}
 
 	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
-		t.Error("expected error does match return error")
+		t.Error("expected error does not match return error")
 	}
 }
 
@@ -377,7 +377,7 @@ func TestGetBlockedTerms(t *testing.T) {
 	}
 
 	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
-		t.Error("expected error does match return error")
+		t.Error("expected error does not match return error")
 	}
 }
 
@@ -472,7 +472,7 @@ func TestAddBlockedTerm(t *testing.T) {
 	}
 
 	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
-		t.Error("expected error does match return error")
+		t.Error("expected error does not match return error")
 	}
 }
 
@@ -543,7 +543,7 @@ func TestRemoveBlockedTerm(t *testing.T) {
 	}
 
 	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
-		t.Error("expected error does match return error")
+		t.Error("expected error does not match return error")
 	}
 }
 
@@ -631,7 +631,7 @@ func TestDeleteChatMessage(t *testing.T) {
 	}
 
 	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
-		t.Error("expected error does match return error")
+		t.Error("expected error does not match return error")
 	}
 }
 
@@ -706,7 +706,7 @@ func TestDeleteAllChatMessages(t *testing.T) {
 	}
 
 	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
-		t.Error("expected error does match return error")
+		t.Error("expected error does not match return error")
 	}
 }
 
@@ -806,7 +806,7 @@ func TestGetModerators(t *testing.T) {
 	}
 
 	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
-		t.Error("expected error does match return error")
+		t.Error("expected error does not match return error")
 	}
 }
 
@@ -876,7 +876,7 @@ func TestAddChannelModerator(t *testing.T) {
 	}
 
 	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
-		t.Error("expected error does match return error")
+		t.Error("expected error does not match return error")
 	}
 }
 
@@ -946,7 +946,7 @@ func TestRemoveChannelModerator(t *testing.T) {
 	}
 
 	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
-		t.Error("expected error does match return error")
+		t.Error("expected error does not match return error")
 	}
 }
 
@@ -1114,7 +1114,7 @@ func TestGetModeratedChannels(t *testing.T) {
 	}
 
 	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
-		t.Error("expected error does match return error")
+		t.Error("expected error does not match return error")
 	}
 }
 
@@ -1291,7 +1291,7 @@ func TestSendModeratorWarnMessage(t *testing.T) {
 	}
 
 	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
-		t.Error("expected error does match return error")
+		t.Error("expected error does not match return error")
 	}
 }
 
@@ -1408,7 +1408,7 @@ func TestAddSuspiciousStatusToChatUser(t *testing.T) {
 	}
 
 	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
-		t.Error("expected error does match return error")
+		t.Error("expected error does not match return error")
 	}
 }
 
@@ -1518,6 +1518,6 @@ func TestRemoveSuspiciousStatusFromChatUser(t *testing.T) {
 	}
 
 	if err.Error() != "failed to execute API request: Oops, that's bad :(" {
-		t.Error("expected error does match return error")
+		t.Error("expected error does not match return error")
 	}
 }
