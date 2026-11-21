@@ -1,38 +1,44 @@
 package helix
 
 type ChannelCustomRewardsParams struct {
-	BroadcasterID                     string `query:"broadcaster_id"`
-	Title                             string `json:"title"`
-	Cost                              int    `json:"cost"`
-	Prompt                            string `json:"prompt"`
-	IsEnabled                         bool   `json:"is_enabled"`
+	BroadcasterID string `query:"broadcaster_id" json:"-"`
+	// Body fields are only sent when set, so Twitch applies its own defaults.
+	// Twitch rejects zero values for the string and int fields, and the
+	// booleans are pointers so false can be sent.
+	Title                             string `json:"title,omitempty"` // required
+	Cost                              int    `json:"cost,omitempty"`  // required
+	Prompt                            string `json:"prompt,omitempty"`
+	IsEnabled                         *bool  `json:"is_enabled,omitempty"`
 	BackgroundColor                   string `json:"background_color,omitempty"`
-	IsUserInputRequired               bool   `json:"is_user_input_required"`
-	IsMaxPerStreamEnabled             bool   `json:"is_max_per_stream_enabled"`
-	MaxPerStream                      int    `json:"max_per_stream"`
-	IsMaxPerUserPerStreamEnabled      bool   `json:"is_max_per_user_per_stream_enabled"`
-	MaxPerUserPerStream               int    `json:"max_per_user_per_stream"`
-	IsGlobalCooldownEnabled           bool   `json:"is_global_cooldown_enabled"`
-	GlobalCooldownSeconds             int    `json:"global_cooldown_seconds"`
-	ShouldRedemptionsSkipRequestQueue bool   `json:"should_redemptions_skip_request_queue"`
+	IsUserInputRequired               *bool  `json:"is_user_input_required,omitempty"`
+	IsMaxPerStreamEnabled             *bool  `json:"is_max_per_stream_enabled,omitempty"`
+	MaxPerStream                      int    `json:"max_per_stream,omitempty"`
+	IsMaxPerUserPerStreamEnabled      *bool  `json:"is_max_per_user_per_stream_enabled,omitempty"`
+	MaxPerUserPerStream               int    `json:"max_per_user_per_stream,omitempty"`
+	IsGlobalCooldownEnabled           *bool  `json:"is_global_cooldown_enabled,omitempty"`
+	GlobalCooldownSeconds             int    `json:"global_cooldown_seconds,omitempty"`
+	ShouldRedemptionsSkipRequestQueue *bool  `json:"should_redemptions_skip_request_queue,omitempty"`
 }
 
 type UpdateChannelCustomRewardsParams struct {
-	ID                                string `query:"id"`
-	BroadcasterID                     string `query:"broadcaster_id"`
-	Title                             string `json:"title"`
-	Cost                              int    `json:"cost"`
-	Prompt                            string `json:"prompt"`
-	IsEnabled                         bool   `json:"is_enabled"`
+	ID            string `query:"id" json:"-"`
+	BroadcasterID string `query:"broadcaster_id" json:"-"`
+	// Body fields are only sent when set. Twitch rejects zero values for the
+	// string and int fields, and the booleans are pointers so false can be sent.
+	Title                             string `json:"title,omitempty"`
+	Cost                              int    `json:"cost,omitempty"`
+	Prompt                            string `json:"prompt,omitempty"`
+	IsEnabled                         *bool  `json:"is_enabled,omitempty"`
 	BackgroundColor                   string `json:"background_color,omitempty"`
-	IsUserInputRequired               bool   `json:"is_user_input_required"`
-	IsMaxPerStreamEnabled             bool   `json:"is_max_per_stream_enabled"`
-	MaxPerStream                      int    `json:"max_per_stream"`
-	IsMaxPerUserPerStreamEnabled      bool   `json:"is_max_per_user_per_stream_enabled"`
-	MaxPerUserPerStream               int    `json:"max_per_user_per_stream"`
-	IsGlobalCooldownEnabled           bool   `json:"is_global_cooldown_enabled"`
-	GlobalCooldownSeconds             int    `json:"global_cooldown_seconds"`
-	ShouldRedemptionsSkipRequestQueue bool   `json:"should_redemptions_skip_request_queue"`
+	IsUserInputRequired               *bool  `json:"is_user_input_required,omitempty"`
+	IsMaxPerStreamEnabled             *bool  `json:"is_max_per_stream_enabled,omitempty"`
+	MaxPerStream                      int    `json:"max_per_stream,omitempty"`
+	IsMaxPerUserPerStreamEnabled      *bool  `json:"is_max_per_user_per_stream_enabled,omitempty"`
+	MaxPerUserPerStream               int    `json:"max_per_user_per_stream,omitempty"`
+	IsGlobalCooldownEnabled           *bool  `json:"is_global_cooldown_enabled,omitempty"`
+	GlobalCooldownSeconds             int    `json:"global_cooldown_seconds,omitempty"`
+	IsPaused                          *bool  `json:"is_paused,omitempty"`
+	ShouldRedemptionsSkipRequestQueue *bool  `json:"should_redemptions_skip_request_queue,omitempty"`
 }
 
 type DeleteCustomRewardsParams struct {
@@ -105,9 +111,9 @@ type DeleteCustomRewardsResponse struct {
 }
 
 type UpdateChannelCustomRewardsRedemptionStatusParams struct {
-	ID            string `query:"id"`
-	BroadcasterID string `query:"broadcaster_id"`
-	RewardID      string `query:"reward_id"`
+	ID            string `query:"id" json:"-"`
+	BroadcasterID string `query:"broadcaster_id" json:"-"`
+	RewardID      string `query:"reward_id" json:"-"`
 	Status        string `json:"status"`
 }
 
