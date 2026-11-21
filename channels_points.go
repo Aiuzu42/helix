@@ -111,9 +111,9 @@ type DeleteCustomRewardsResponse struct {
 }
 
 type UpdateChannelCustomRewardsRedemptionStatusParams struct {
-	ID            string `query:"id"`
-	BroadcasterID string `query:"broadcaster_id"`
-	RewardID      string `query:"reward_id"`
+	ID            string `query:"id" json:"-"`
+	BroadcasterID string `query:"broadcaster_id" json:"-"`
+	RewardID      string `query:"reward_id" json:"-"`
 	Status        string `json:"status"`
 }
 

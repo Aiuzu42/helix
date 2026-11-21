@@ -465,12 +465,22 @@ func (c *bodyCapturingHTTPClient) Do(req *http.Request) (*http.Response, error) 
 func newBodyCapturingClient() (*Client, *bodyCapturingHTTPClient) {
 	capture := &bodyCapturingHTTPClient{}
 	return &Client{
-		opts: &Options{ClientID: "my-client-id", HTTPClient: capture},
+		opts: &Options{ClientID: "my-client-id", APIBaseURL: DefaultAPIBaseURL, HTTPClient: capture},
 		ctx:  context.Background(),
 	}, capture
 }
 
 func boolPtr(b bool) *bool { return &b }
+
+func assertRequestTarget(t *testing.T, req *http.Request, method, url string) {
+	t.Helper()
+	if req.Method != method {
+		t.Errorf("expected method %s, got %s", method, req.Method)
+	}
+	if got := req.URL.Scheme + "://" + req.URL.Host + req.URL.Path; got != url {
+		t.Errorf("expected URL %s, got %s", url, got)
+	}
+}
 
 func decodeBody(t *testing.T, body []byte) map[string]any {
 	t.Helper()
@@ -571,6 +581,8 @@ func TestCreateCustomRewardPayload(t *testing.T) {
 			if _, err := c.CreateCustomReward(tc.params); err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
+
+			assertRequestTarget(t, capture.req, http.MethodPost, "https://api.twitch.tv/helix/channel_points/custom_rewards")
 
 			if got := capture.req.URL.Query().Get("broadcaster_id"); got != tc.params.BroadcasterID {
 				t.Errorf("expected broadcaster_id query param %q, got %q", tc.params.BroadcasterID, got)
@@ -673,6 +685,8 @@ func TestUpdateCustomRewardPayload(t *testing.T) {
 				t.Fatalf("unexpected error: %v", err)
 			}
 
+			assertRequestTarget(t, capture.req, http.MethodPatch, "https://api.twitch.tv/helix/channel_points/custom_rewards")
+
 			query := capture.req.URL.Query()
 			if got := query.Get("id"); got != tc.params.ID {
 				t.Errorf("expected id query param %q, got %q", tc.params.ID, got)
@@ -686,5 +700,34 @@ func TestUpdateCustomRewardPayload(t *testing.T) {
 				t.Errorf("unexpected body\n got: %s\nwant: %v", capture.body, tc.want)
 			}
 		})
+	}
+}
+
+func TestUpdateRedemptionStatusPayload(t *testing.T) {
+	t.Parallel()
+
+	c, capture := newBodyCapturingClient()
+	params := &UpdateChannelCustomRewardsRedemptionStatusParams{
+		ID:            "17fa2df1-ad76-4804-bfa5-a40ef63efe63",
+		BroadcasterID: "274637212",
+		RewardID:      "92af127c-7326-4483-a52b-b0da0be61c01",
+		Status:        "CANCELED",
+	}
+	if _, err := c.UpdateChannelCustomRewardsRedemptionStatus(params); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	assertRequestTarget(t, capture.req, http.MethodPatch, "https://api.twitch.tv/helix/channel_points/custom_rewards/redemptions")
+
+	query := capture.req.URL.Query()
+	for key, want := range map[string]string{"id": params.ID, "broadcaster_id": params.BroadcasterID, "reward_id": params.RewardID} {
+		if got := query.Get(key); got != want {
+			t.Errorf("expected %s query param %q, got %q", key, want, got)
+		}
+	}
+
+	payload := decodeBody(t, capture.body)
+	if want := map[string]any{"status": "CANCELED"}; !reflect.DeepEqual(payload, want) {
+		t.Errorf("unexpected body\n got: %s\nwant: %v", capture.body, want)
 	}
 }
