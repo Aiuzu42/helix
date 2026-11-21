@@ -2,7 +2,11 @@ package helix
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
+	"net/http/httptest"
+	"reflect"
 	"testing"
 )
 
@@ -430,5 +434,257 @@ func TestUpdateCustomRewardRedemptionStatus(t *testing.T) {
 				t.Errorf("expected reward title to be \"game analysis\", got \"%s\"", title)
 			}
 		}
+	}
+}
+
+// bodyCapturingHTTPClient records the request sent by the client, including
+// its body, which mockHTTPClient consumes before the handler can see it.
+type bodyCapturingHTTPClient struct {
+	req  *http.Request
+	body []byte
+}
+
+func (c *bodyCapturingHTTPClient) Do(req *http.Request) (*http.Response, error) {
+	c.req = req
+	if req.Body != nil {
+		defer req.Body.Close() //nolint:errcheck
+		b, err := io.ReadAll(req.Body)
+		if err != nil {
+			return nil, err
+		}
+		c.body = b
+	}
+
+	rr := httptest.NewRecorder()
+	rr.WriteHeader(http.StatusOK)
+	rr.WriteString(`{"data":[]}`) //nolint:errcheck
+
+	return rr.Result(), nil
+}
+
+func newBodyCapturingClient() (*Client, *bodyCapturingHTTPClient) {
+	capture := &bodyCapturingHTTPClient{}
+	return &Client{
+		opts: &Options{ClientID: "my-client-id", HTTPClient: capture},
+		ctx:  context.Background(),
+	}, capture
+}
+
+func boolPtr(b bool) *bool { return &b }
+
+func decodeBody(t *testing.T, body []byte) map[string]any {
+	t.Helper()
+	payload := map[string]any{}
+	if err := json.Unmarshal(body, &payload); err != nil {
+		t.Fatalf("request body is not valid JSON: %v (%s)", err, body)
+	}
+	return payload
+}
+
+func TestCreateCustomRewardPayload(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name   string
+		params *ChannelCustomRewardsParams
+		want   map[string]any
+	}{
+		{
+			name:   "no body fields set sends an empty object",
+			params: &ChannelCustomRewardsParams{BroadcasterID: "145328278"},
+			want:   map[string]any{},
+		},
+		{
+			name: "only required fields set sends only those",
+			params: &ChannelCustomRewardsParams{
+				BroadcasterID: "145328278",
+				Title:         "game analysis",
+				Cost:          50000,
+			},
+			want: map[string]any{"title": "game analysis", "cost": float64(50000)},
+		},
+		{
+			name: "explicit false booleans are sent",
+			params: &ChannelCustomRewardsParams{
+				BroadcasterID:                     "145328278",
+				Title:                             "game analysis",
+				Cost:                              50000,
+				IsEnabled:                         boolPtr(false),
+				IsUserInputRequired:               boolPtr(false),
+				IsMaxPerStreamEnabled:             boolPtr(false),
+				IsMaxPerUserPerStreamEnabled:      boolPtr(false),
+				IsGlobalCooldownEnabled:           boolPtr(false),
+				ShouldRedemptionsSkipRequestQueue: boolPtr(false),
+			},
+			want: map[string]any{
+				"title":                                 "game analysis",
+				"cost":                                  float64(50000),
+				"is_enabled":                            false,
+				"is_user_input_required":                false,
+				"is_max_per_stream_enabled":             false,
+				"is_max_per_user_per_stream_enabled":    false,
+				"is_global_cooldown_enabled":            false,
+				"should_redemptions_skip_request_queue": false,
+			},
+		},
+		{
+			name: "every field set is sent",
+			params: &ChannelCustomRewardsParams{
+				BroadcasterID:                     "145328278",
+				Title:                             "game analysis",
+				Cost:                              50000,
+				Prompt:                            "pick a game",
+				IsEnabled:                         boolPtr(true),
+				BackgroundColor:                   "#9147FF",
+				IsUserInputRequired:               boolPtr(true),
+				IsMaxPerStreamEnabled:             boolPtr(true),
+				MaxPerStream:                      5,
+				IsMaxPerUserPerStreamEnabled:      boolPtr(true),
+				MaxPerUserPerStream:               2,
+				IsGlobalCooldownEnabled:           boolPtr(true),
+				GlobalCooldownSeconds:             60,
+				ShouldRedemptionsSkipRequestQueue: boolPtr(true),
+			},
+			want: map[string]any{
+				"title":                                 "game analysis",
+				"cost":                                  float64(50000),
+				"prompt":                                "pick a game",
+				"is_enabled":                            true,
+				"background_color":                      "#9147FF",
+				"is_user_input_required":                true,
+				"is_max_per_stream_enabled":             true,
+				"max_per_stream":                        float64(5),
+				"is_max_per_user_per_stream_enabled":    true,
+				"max_per_user_per_stream":               float64(2),
+				"is_global_cooldown_enabled":            true,
+				"global_cooldown_seconds":               float64(60),
+				"should_redemptions_skip_request_queue": true,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			c, capture := newBodyCapturingClient()
+			if _, err := c.CreateCustomReward(tc.params); err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if got := capture.req.URL.Query().Get("broadcaster_id"); got != tc.params.BroadcasterID {
+				t.Errorf("expected broadcaster_id query param %q, got %q", tc.params.BroadcasterID, got)
+			}
+
+			payload := decodeBody(t, capture.body)
+			if !reflect.DeepEqual(payload, tc.want) {
+				t.Errorf("unexpected body\n got: %s\nwant: %v", capture.body, tc.want)
+			}
+		})
+	}
+}
+
+func TestUpdateCustomRewardPayload(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name   string
+		params *UpdateChannelCustomRewardsParams
+		want   map[string]any
+	}{
+		{
+			name:   "no body fields set sends an empty object",
+			params: &UpdateChannelCustomRewardsParams{ID: "123", BroadcasterID: "145328278"},
+			want:   map[string]any{},
+		},
+		{
+			name:   "only title set sends only title",
+			params: &UpdateChannelCustomRewardsParams{ID: "123", BroadcasterID: "145328278", Title: "new title"},
+			want:   map[string]any{"title": "new title"},
+		},
+		{
+			name: "explicit false booleans are sent",
+			params: &UpdateChannelCustomRewardsParams{
+				ID:                                "123",
+				BroadcasterID:                     "145328278",
+				IsEnabled:                         boolPtr(false),
+				IsUserInputRequired:               boolPtr(false),
+				IsMaxPerStreamEnabled:             boolPtr(false),
+				IsMaxPerUserPerStreamEnabled:      boolPtr(false),
+				IsGlobalCooldownEnabled:           boolPtr(false),
+				IsPaused:                          boolPtr(false),
+				ShouldRedemptionsSkipRequestQueue: boolPtr(false),
+			},
+			want: map[string]any{
+				"is_enabled":                            false,
+				"is_user_input_required":                false,
+				"is_max_per_stream_enabled":             false,
+				"is_max_per_user_per_stream_enabled":    false,
+				"is_global_cooldown_enabled":            false,
+				"is_paused":                             false,
+				"should_redemptions_skip_request_queue": false,
+			},
+		},
+		{
+			name: "every field set is sent",
+			params: &UpdateChannelCustomRewardsParams{
+				ID:                                "123",
+				BroadcasterID:                     "145328278",
+				Title:                             "game analysis",
+				Cost:                              50000,
+				Prompt:                            "pick a game",
+				IsEnabled:                         boolPtr(true),
+				BackgroundColor:                   "#00E5CB",
+				IsUserInputRequired:               boolPtr(true),
+				IsMaxPerStreamEnabled:             boolPtr(true),
+				MaxPerStream:                      5,
+				IsMaxPerUserPerStreamEnabled:      boolPtr(true),
+				MaxPerUserPerStream:               2,
+				IsGlobalCooldownEnabled:           boolPtr(true),
+				GlobalCooldownSeconds:             60,
+				IsPaused:                          boolPtr(true),
+				ShouldRedemptionsSkipRequestQueue: boolPtr(true),
+			},
+			want: map[string]any{
+				"title":                                 "game analysis",
+				"cost":                                  float64(50000),
+				"prompt":                                "pick a game",
+				"is_enabled":                            true,
+				"background_color":                      "#00E5CB",
+				"is_user_input_required":                true,
+				"is_max_per_stream_enabled":             true,
+				"max_per_stream":                        float64(5),
+				"is_max_per_user_per_stream_enabled":    true,
+				"max_per_user_per_stream":               float64(2),
+				"is_global_cooldown_enabled":            true,
+				"global_cooldown_seconds":               float64(60),
+				"is_paused":                             true,
+				"should_redemptions_skip_request_queue": true,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			c, capture := newBodyCapturingClient()
+			if _, err := c.UpdateCustomReward(tc.params); err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			query := capture.req.URL.Query()
+			if got := query.Get("id"); got != tc.params.ID {
+				t.Errorf("expected id query param %q, got %q", tc.params.ID, got)
+			}
+			if got := query.Get("broadcaster_id"); got != tc.params.BroadcasterID {
+				t.Errorf("expected broadcaster_id query param %q, got %q", tc.params.BroadcasterID, got)
+			}
+
+			payload := decodeBody(t, capture.body)
+			if !reflect.DeepEqual(payload, tc.want) {
+				t.Errorf("unexpected body\n got: %s\nwant: %v", capture.body, tc.want)
+			}
+		})
 	}
 }
